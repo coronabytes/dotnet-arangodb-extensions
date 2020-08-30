@@ -103,7 +103,7 @@ namespace Core.Arango.DevExtreme
 
             if (HasGrouping)
             {
-                var res = await arango.QueryAsync<JObject>(handle, query, Parameter,
+                var res = await arango.Query.ExecuteAsync<JObject>(handle, query, Parameter,
                     cancellationToken: cancellationToken);
 
                 return new DxLoadResult
@@ -113,7 +113,7 @@ namespace Core.Arango.DevExtreme
             }
             else
             {
-                var res = await arango.QueryAsync<T>(handle, query, Parameter,
+                var res = await arango.Query.ExecuteAsync<T>(handle, query, Parameter,
                     fullCount: _loadOption.RequireTotalCount, cancellationToken: cancellationToken);
 
                 decimal?[] summary = null;
@@ -138,7 +138,7 @@ namespace Core.Arango.DevExtreme
 
                     var summaryQuery = summaryQueryBuilder.ToString();
 
-                    var summaryResult = await arango.QueryAsync<JObject>(handle, summaryQuery, Parameter,
+                    var summaryResult = await arango.Query.ExecuteAsync<JObject>(handle, summaryQuery, Parameter,
                         cancellationToken: cancellationToken);
 
                     summary = summaryResult.SingleOrDefault()?.PropertyValues()

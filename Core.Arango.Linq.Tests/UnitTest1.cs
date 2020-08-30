@@ -22,7 +22,7 @@ namespace Core.Arango.Linq.Tests
             new ArangoContext($"Server=http://localhost:8529;Realm=CI-{Guid.NewGuid():D};User=root;Password=;");
 
         [Fact]
-        public async void TestToList()
+        public void TestToList()
         {
             var test = Arango.AsQueryable<Project>("test").ToList();
             Assert.True(test.Count > 0);
@@ -33,7 +33,7 @@ namespace Core.Arango.Linq.Tests
         /// expected query: FOR x IN Project FILTER x.Name == "A" return x
         /// </summary>
         [Fact]
-        public async void TestSingleOrDefault()
+        public void TestSingleOrDefault()
         {
             var test = Arango.AsQueryable<Project>("test").SingleOrDefault(x => x.Name == "A");
             Assert.True(test.Name == "A");
@@ -70,7 +70,7 @@ namespace Core.Arango.Linq.Tests
         /// expected query: FOR x IN Project FILTER x.Value == 1 || x.Value == 2 RETURN x
         /// </summary>
         [Fact]
-        public async void TestOr()
+        public void TestOr()
         {
             var test = Arango.AsQueryable<Project>("test").Where(x => x.Value == 1 || x.Value == 2).ToList();
             foreach (var t in test)
@@ -97,7 +97,7 @@ namespace Core.Arango.Linq.Tests
         /// expected query: FOR x IN Project FILTER x.Name == @p || x.Name == @pUnique RETURN x.Name
         /// </summary>
         [Fact]
-        public async void TestInjection()
+        public void TestInjection()
         {
             var test = Arango.AsQueryable<Project>("test").Where(x => x.Name == "A" || x.Name == "B \" RETURN 42").Select(x => x.Name).ToList();
             Assert.True(test.Count == 1);
@@ -112,7 +112,7 @@ namespace Core.Arango.Linq.Tests
         {
             var testGuid = Guid.NewGuid();
 
-            await Arango.CreateDocumentAsync("test", nameof(Project), new Project
+            await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
                 Key = testGuid,
                 Name = "TestSingleOrDefault",
@@ -191,24 +191,24 @@ namespace Core.Arango.Linq.Tests
         /// <returns></returns>
         public async Task InitializeAsync()
         {
-            await Arango.CreateDatabaseAsync("test");
-            await Arango.CreateCollectionAsync("test", nameof(Project), ArangoCollectionType.Document);
+            await Arango.Database.CreateAsync("test");
+            await Arango.Collection.CreateAsync("test", nameof(Project), ArangoCollectionType.Document);
 
-            await Arango.CreateDocumentAsync("test", nameof(Project), new Project
+            await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
                 Key = Guid.NewGuid(),
                 Name = "A",
                 Value = 1,
                 StartDate = new DateTime(2020, 04, 03).ToUniversalTime()
             });
-            await Arango.CreateDocumentAsync("test", nameof(Project), new Project
+            await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
                 Key = Guid.NewGuid(),
                 Name = "B",
                 Value = 2,
                 StartDate = DateTime.Now.AddDays(-1).ToUniversalTime()
             });
-            await Arango.CreateDocumentAsync("test", nameof(Project), new Project
+            await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
                 Key = Guid.NewGuid(),
                 Name = "C",
@@ -225,8 +225,8 @@ namespace Core.Arango.Linq.Tests
         {
             try
             {
-                foreach (var db in await Arango.ListDatabasesAsync())
-                    await Arango.DropDatabaseAsync(db);
+                foreach (var db in await Arango.Database.ListAsync())
+                    await Arango.Database.DropAsync(db);
             }
             catch
             {

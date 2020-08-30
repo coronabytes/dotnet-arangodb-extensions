@@ -31,13 +31,13 @@ namespace Core.Arango.Serilog
 
             try
             {
-                if (!_arango.ExistDatabaseAsync(_database).Result)
-                    _arango.CreateDatabaseAsync(_database).Wait();
+                if (!_arango.Database.ExistAsync(_database).Result)
+                    _arango.Database.CreateAsync(_database).Wait();
 
-                var collections = _arango.ListCollectionsAsync(_database).Result;
+                var collections = _arango.Collection.ListAsync(_database).Result;
 
                 if (!collections.Contains(collection))
-                    _arango.CreateCollectionAsync(_database, _collection, ArangoCollectionType.Document).Wait();
+                    _arango.Collection.CreateAsync(_database, _collection, ArangoCollectionType.Document).Wait();
             }
             catch (Exception)
             {
@@ -49,7 +49,7 @@ namespace Core.Arango.Serilog
         {
             try
             {
-                await _arango.CreateDocumentsAsync(_database, _collection, events.Select(x => new LogEventEntity
+                await _arango.Document.CreateAsync(_database, _collection, events.Select(x => new LogEventEntity
                 {
                     Level = x.Level.ToString(),
                     Timestamp = x.Timestamp.UtcDateTime,

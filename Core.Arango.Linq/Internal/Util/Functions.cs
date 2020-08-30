@@ -177,14 +177,6 @@ namespace Core.Arango.Linq.Internal.Util
             return tuple.GetType().GetProperties().Select(x => x.GetValue(tuple)).ToArray();
         }
 
-
-        public static bool TryTupleValues(object tuple, [NotNullWhen(true)] out object[]? values)
-        {
-            var isTupleType = tuple.GetType().IsTupleType();
-            values = isTupleType ? TupleValues(tuple) : null;
-            return isTupleType;
-        }
-
         // based on https://github.com/dotnet/corefx/blob/7cf002ec36109943c048ec8da8ef80621190b4be/src/Common/src/CoreLib/System/Text/StringBuilder.cs#L1514
         public static (string literal, int? index, int? alignment, string? itemFormat)[] ParseFormatString(
             string format)

@@ -67,7 +67,7 @@ namespace Core.Arango.Linq
             var query = writer.ToString();
             var bindVars = writer.BindVars;
 
-            var res = _arango.QueryAsync(elementType, isEnumerable, _handle, query, bindVars).Result;
+            var res = _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query, bindVars).Result;
             // var resType = res.GetType();
 
             return (TResult) res;
@@ -87,7 +87,7 @@ namespace Core.Arango.Linq
             var query = writer.ToString();
             var bindVars = writer.BindVars;
 
-            var res = await _arango.QueryAsync(elementType, isEnumerable, _handle, query, bindVars,
+            var res = await _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query, bindVars,
                 cancellationToken: cancel); //geändert: isEnumerable anstatt true
 
             var list = res as List<TResult>;

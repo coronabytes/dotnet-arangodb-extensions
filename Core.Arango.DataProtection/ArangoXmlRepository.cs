@@ -30,13 +30,13 @@ namespace Core.Arango.DataProtection
 
             try
             {
-                if (!_context.ExistDatabaseAsync(_database).Result)
-                    _context.CreateDatabaseAsync(_database).Wait();
+                if (!_context.Database.ExistAsync(_database).Result)
+                    _context.Database.CreateAsync(_database).Wait();
 
-                var collections = _context.ListCollectionsAsync(_database).Result;
+                var collections = _context.Collection.ListAsync(_database).Result;
 
                 if (!collections.Contains(collection))
-                    _context.CreateCollectionAsync(_database, _collection, ArangoCollectionType.Document).Wait();
+                    _context.Collection.CreateAsync(_database, _collection, ArangoCollectionType.Document).Wait();
             }
             catch (Exception e)
             {
@@ -50,7 +50,7 @@ namespace Core.Arango.DataProtection
         {
             var logger = _logger;
 
-            return _context.FindAsync<DataProtectionEntity>(_database, _collection, $"true").Result
+            return _context.Query.FindAsync<DataProtectionEntity>(_database, _collection, $"true").Result
                 .Select(key => TryParseKeyXml(key.Xml, logger))
                 .ToList().AsReadOnly();
         }
@@ -64,7 +64,7 @@ namespace Core.Arango.DataProtection
                 Xml = element.ToString(SaveOptions.DisableFormatting)
             };
 
-            _context.CreateDocumentAsync(_database, _collection, newKey).Wait();
+            _context.Document.CreateAsync(_database, _collection, newKey).Wait();
         }
 
         private static XElement TryParseKeyXml(string xml, ILogger logger)
