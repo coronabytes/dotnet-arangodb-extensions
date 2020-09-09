@@ -49,7 +49,7 @@ namespace Core.Arango.Serilog
         {
             try
             {
-                await _arango.Document.CreateAsync(_database, _collection, events.Select(x => new LogEventEntity
+                await _arango.Document.CreateManyAsync(_database, _collection, events.Select(x => new LogEventEntity
                 {
                     Level = x.Level.ToString(),
                     Timestamp = x.Timestamp.UtcDateTime,
