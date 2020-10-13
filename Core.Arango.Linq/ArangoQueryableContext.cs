@@ -9,7 +9,7 @@ namespace Core.Arango.Linq
 {
     public class ArangoQueryableContext<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>
     {
-        public ArangoQueryableContext(ArangoContext arango, ArangoHandle handle, string collection)
+        public ArangoQueryableContext(IArangoContext arango, ArangoHandle handle, string collection)
         {
             Provider = new ArangoProvider(arango, handle, collection);
             Expression = Expression.Constant(this);

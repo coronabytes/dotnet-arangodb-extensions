@@ -10,11 +10,11 @@ namespace Core.Arango.Linq
 {
     public class ArangoProvider : IQueryProvider
     {
-        private readonly ArangoContext _arango;
+        private readonly IArangoContext _arango;
         private readonly string _collection;
         private readonly ArangoHandle _handle;
 
-        public ArangoProvider(ArangoContext arango, ArangoHandle handle, string collection)
+        public ArangoProvider(IArangoContext arango, ArangoHandle handle, string collection)
         {
             _arango = arango;
             _handle = handle;
