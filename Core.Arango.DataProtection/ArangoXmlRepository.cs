@@ -12,13 +12,13 @@ namespace Core.Arango.DataProtection
     internal class ArangoXmlRepository : IXmlRepository
     {
         private readonly string _collection;
-        private readonly ArangoContext _context;
+        private readonly IArangoContext _context;
         private readonly string _database;
         private readonly ILogger _logger;
         private readonly IServiceProvider _services;
 
         public ArangoXmlRepository(IServiceProvider services, ILoggerFactory loggerFactory,
-            string database, string collection, ArangoContext context)
+            string database, string collection, IArangoContext context)
         {
             if (loggerFactory == null) throw new ArgumentNullException(nameof(loggerFactory));
 

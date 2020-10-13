@@ -16,7 +16,7 @@ namespace Core.Arango.DataProtection
         /// <param name="collection">Name of the collection</param>
         /// <param name="context">Arango context (if not supplied it will be tried via dependency injection)</param>
         public static IDataProtectionBuilder PersistKeysToArangoDB(this IDataProtectionBuilder builder,
-            string database = "dataprotection", string collection = "keys", ArangoContext context = null)
+            string database = "dataprotection", string collection = "keys", IArangoContext context = null)
         {
             builder.Services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(services =>
             {

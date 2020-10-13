@@ -60,7 +60,7 @@ namespace Core.Arango.DevExtreme
         /// <summary>
         ///     Executes transformed query asynchronous
         /// </summary>
-        public async Task<DxLoadResult> ExecuteAsync<T>(ArangoContext arango,
+        public async Task<DxLoadResult> ExecuteAsync<T>(IArangoContext arango,
             ArangoHandle handle,
             string collection,
             CancellationToken cancellationToken = default)

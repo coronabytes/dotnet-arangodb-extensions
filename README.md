@@ -38,8 +38,6 @@ public void ConfigureServices(IServiceCollection services)
 
 # DevExtreme Query
 - Translates DevExtreme queries to AQL with filtering, sorting, grouping and summaries on a 'best effort basis'
-- DataSourceLoadOptions need to be parsed by Newtonsoft Json and not System.Text.Json
-  - services.AddControllers().AddNewtonsoftJson();
 - Parameters are escaped with bindvars
 - Property names 
   - need to match ^[A-Za-z_][A-Za-z0-9\\.]*$

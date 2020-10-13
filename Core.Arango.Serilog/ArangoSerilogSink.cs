@@ -13,12 +13,12 @@ namespace Core.Arango.Serilog
     {
         public const int DefaultBatchPostingLimit = 50;
         public static readonly TimeSpan DefaultPeriod = TimeSpan.FromSeconds(2);
-        private readonly ArangoContext _arango;
+        private readonly IArangoContext _arango;
         private readonly string _collection;
         private readonly string _database;
 
         public ArangoSerilogSink(
-            ArangoContext arango,
+            IArangoContext arango,
             string database = "logs",
             string collection = "logs",
             int batchPostingLimit = DefaultBatchPostingLimit,
