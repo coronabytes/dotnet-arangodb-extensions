@@ -18,7 +18,7 @@ namespace Core.Arango.Linq.Tests
 
     public class UnitTest1 : IAsyncLifetime
     {
-        protected readonly ArangoContext Arango =
+        protected readonly IArangoContext Arango =
             new ArangoContext($"Server=http://localhost:8529;Realm=CI-{Guid.NewGuid():D};User=root;Password=;");
 
         [Fact]
