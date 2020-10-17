@@ -1,29 +1,17 @@
 ![Build](https://github.com/coronabytes/dotnet-arangodb-extensions/workflows/Build/badge.svg)
 
-# Serilog
-```csharp
-webBuilder.UseSerilog((c, log) =>
-{
-    var arango = c.Configuration.GetConnectionString("Arango");
+# .NET driver for ArangoDB extensions
 
-    log.MinimumLevel.Debug()
-        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
-        .Enrich.FromLogContext()
-        .WriteTo.Sink(new ArangoSerilogSink(new ArangoContext(arango), 
-            database: "logs", 
-            collection: "logs", 
-            batchPostingLimit: 50, 
-            TimeSpan.FromSeconds(2)), 
-            restrictedToMinimumLevel: LogEventLevel.Information);
+| Extension   |         |
+| :---        | :---    |
+| [Core.Arango.DataProtection](https://www.nuget.org/packages/Core.Arango.DataProtection) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DataProtection) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DataProtection) |
+| [Core.Arango.DevExtreme](https://www.nuget.org/packages/Core.Arango.DevExtreme) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DevExtreme) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DevExtreme) |
+| [Core.Arango.Linq](https://www.nuget.org/packages/Core.Arango.Linq) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Linq) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Linq) |
+| [Core.Arango.Serilog](https://www.nuget.org/packages/Core.Arango.Serilog) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Serilog) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Serilog) |
 
-    // This is unreliable...
-    if (Environment.UserInteractive)
-        log.WriteTo.Console(theme: AnsiConsoleTheme.Code);
-});
-```
+# Snippets
 
-# DataProtection
+## DataProtection
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {
@@ -36,7 +24,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-# DevExtreme Query
+## DevExtreme
 - Translates DevExtreme queries to AQL with filtering, sorting, grouping and summaries on a 'best effort basis'
 - Parameters are escaped with bindvars
 - Property names 
@@ -76,4 +64,27 @@ public async Task<ActionResult<DxLoadResult>> DxQuery([FromQuery] DataSourceLoad
 
     return await arangoTransform.ExecuteAsync<SomeEntity>(arango, "database", "collection");
 }
+```
+
+## Serilog
+```csharp
+webBuilder.UseSerilog((c, log) =>
+{
+    var arango = c.Configuration.GetConnectionString("Arango");
+
+    log.MinimumLevel.Debug()
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+        .Enrich.FromLogContext()
+        .WriteTo.Sink(new ArangoSerilogSink(new ArangoContext(arango), 
+            database: "logs", 
+            collection: "logs", 
+            batchPostingLimit: 50, 
+            TimeSpan.FromSeconds(2)), 
+            restrictedToMinimumLevel: LogEventLevel.Information);
+
+    // This is unreliable...
+    if (Environment.UserInteractive)
+        log.WriteTo.Console(theme: AnsiConsoleTheme.Code);
+});
 ```
