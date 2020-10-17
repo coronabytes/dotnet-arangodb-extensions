@@ -7,22 +7,27 @@ on:
   pull_request:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dotnet-version: [3.1.403]
+        arango-version: [3.6.7, 3.7.2]
 
     steps:
     - uses: actions/checkout@v2
     
-    - name: ArangoDB 3.7.2
-      run: docker run -d --rm -e ARANGO_ROOT_PASSWORD= -p 8529:8529 arangodb:3.7.2
+    - name: ArangoDB ${{ matrix.arango-version }}
+      run: docker run -d --rm -e ARANGO_ROOT_PASSWORD= -p 8529:8529 arangodb:${{ matrix.arango-version }}
     
-    - name: Setup
+    - name: Setup .NET ${{ matrix.dotnet-version }}
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.402
+        dotnet-version: ${{ matrix.dotnet-version }}
     
     - name: Build
       run: dotnet build --configuration Release
