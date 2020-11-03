@@ -9,11 +9,11 @@ namespace Core.Arango.DevExtreme
 
         [DefaultValue(-1)]
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public int TotalCount { get; set; } = -1;
+        public long TotalCount { get; set; } = -1;
 
         [DefaultValue(-1)]
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public int GroupCount { get; set; } = -1;
+        public long GroupCount { get; set; } = -1;
 
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public decimal?[] Summary { get; set; }
