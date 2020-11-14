@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Core.Arango.Protocol;
 using Newtonsoft.Json;
@@ -68,6 +69,7 @@ namespace Core.Arango.Serilog
         public class LogEventEntity
         {
             [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+            [System.Text.Json.Serialization.JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public string Key { get; set; }
 
             public DateTime Timestamp { get; set; }

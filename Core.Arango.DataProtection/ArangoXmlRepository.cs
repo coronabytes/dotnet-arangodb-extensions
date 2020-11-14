@@ -26,7 +26,7 @@ namespace Core.Arango.DataProtection
             _services = services ?? throw new ArgumentNullException(nameof(services));
             _database = database;
             _collection = collection;
-            _context = context ?? services.GetRequiredService<ArangoContext>();
+            _context = context ?? services.GetService<IArangoContext>() ?? services.GetRequiredService<ArangoContext>();
 
             try
             {

@@ -10,13 +10,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Core.Arango.DevExtreme
 {
-    internal enum TypeHint
-    {
-        Unsure,
-        String,
-        DateOrNumber
-    }
-
     /// <summary>
     ///     DevExtreme DataSourceLoadOptions to AQL
     /// </summary>
