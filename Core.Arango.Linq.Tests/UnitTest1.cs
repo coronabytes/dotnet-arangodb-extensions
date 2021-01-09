@@ -213,7 +213,7 @@ namespace Core.Arango.Linq.Tests
                 Key = Guid.NewGuid(),
                 Name = "C",
                 Value = 3,
-                StartDate = new DateTime(2021, 1, 5).ToUniversalTime()
+                StartDate = new DateTime(3021, 1, 5).ToUniversalTime()
             });
         }
 
