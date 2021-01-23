@@ -1,8 +1,9 @@
 ![Build](https://github.com/coronabytes/dotnet-arangodb-extensions/workflows/Build/badge.svg)
 
-# .NET driver for ArangoDB extensions
+# Extensions for .NET ArangoDB Driver
+See [dotnet-arangodb](https://github.com/coronabytes/dotnet-arangodb)
 
-| Extension   |         |
+| Extension   | Nuget        |
 | :---        | :---    |
 | [Core.Arango.DataProtection](https://www.nuget.org/packages/Core.Arango.DataProtection) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DataProtection) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DataProtection) |
 | [Core.Arango.DevExtreme](https://www.nuget.org/packages/Core.Arango.DevExtreme) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DevExtreme) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DevExtreme) |
