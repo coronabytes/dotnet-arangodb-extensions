@@ -94,6 +94,7 @@ webBuilder.UseSerilog((c, log) =>
 - It literally translates C# to AQL (ExpressionTreeToString)
 - If the there are any constructs producing invalid AQL, you're welcome to make a PR with fix and unittest.
 - Known Bugs
+  - The lambda paramter needs to stay the same between Where, Select, OrderBy (e.g. "x")
   - No camelCase support other than naming your properties camelCase 
   - ToListAsync work - Single/FirstOrDefaultAsync not provided - solution could be taken from EFcore
 
