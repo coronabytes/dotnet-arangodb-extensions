@@ -88,3 +88,21 @@ webBuilder.UseSerilog((c, log) =>
         log.WriteTo.Console(theme: AnsiConsoleTheme.Code);
 });
 ```
+
+## LINQ to AQL
+- Highly experimental LINQ provider for IArangoContext
+- It literally translates C# to AQL (ExpressionTreeToString)
+- If the there are any constructs producing invalid AQL, you're welcome to make a PR with fix and unittest.
+- Known Bugs
+  - No camelCase support other than naming your properties camelCase 
+  - ToListAsync work - Single/FirstOrDefaultAsync not provided - solution could be taken from EFcore
+
+```csharp
+arangoContext.AsQueryable<Project>("projects")
+.Where(x => x.Name == "A")
+.Select(x => x.Name).ToList();
+
+arangoContext.AsQueryable<Project>("projects")
+.Where(x =>  x.StartDate <= DateTime.UtcNow)
+.Select(x => x.StartDate).ToList();
+```
