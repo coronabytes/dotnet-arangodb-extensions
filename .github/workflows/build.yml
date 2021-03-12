@@ -16,10 +16,10 @@ jobs:
     strategy:
       matrix:
         dotnet:
-          - 5.0.101
+          - 5.0.201
         arango: 
           - "arangodb:3.6.9"
-          - "arangodb:3.7.6"
+          - "arangodb:3.7.9"
 
     steps:
     - uses: actions/checkout@v2
