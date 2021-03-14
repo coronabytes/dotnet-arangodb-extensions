@@ -52,6 +52,16 @@ namespace Core.Arango.Linq.Tests
             }
         }
 
+        [Fact]
+        public void TestWhereDateAdd()
+        {
+            var test = Arango.AsQueryable<Project>("test")
+                .Where(x => Aql.DATE_ADD(x.StartDate, 1, "day") >= DateTime.UtcNow)
+                .ToList();
+
+            test.ToArray();
+        }
+
         /// <summary>
         /// expected query: FOR x IN Project FILTER x.Value IN @list RETURN x
         /// </summary>

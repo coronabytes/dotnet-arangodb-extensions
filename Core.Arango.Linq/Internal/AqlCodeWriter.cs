@@ -350,7 +350,14 @@ namespace Core.Arango.Linq.Internal
             var literal = RenderLiteral(expr.Value, language);
             if (literal.Length > 0)
             {
-                Write(literal);
+                if (expr.Value is string)
+                {
+                    Write("\"");
+                    Write(literal);
+                    Write("\"");
+                }
+                else
+                    Write(literal);
             }
             // Write(RenderLiteral(expr.Value, language));
         }
@@ -430,7 +437,7 @@ namespace Core.Arango.Linq.Internal
                 Write(" {");
                 Indent();
                 WriteEOL();
-                expr.Constructor.GetParameters().Select(x => x.Name).Zip(expr.Arguments).ForEachT((name, arg, index) =>
+                expr.Constructor.GetParameters().Select(x => x.Name).ZipX(expr.Arguments).ForEachT((name, arg, index) =>
                 {
                     if (index > 0)
                     {
@@ -524,7 +531,12 @@ namespace Core.Arango.Linq.Internal
             }
 
             if (o is null) // static non-extension method -- write the type name
-                Write(expr.Method.ReflectedType.FriendlyName(language));
+            {
+                var n = expr.Method.ReflectedType.FriendlyName(language);
+
+                if (n != "Aql")
+                    Write(n);
+            }
             // im Falle eines Contains muss die Reihenfolge von LINQ und AQL getauscht werden
             else if (expr.Method.Name.Equals("contains", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -619,7 +631,7 @@ namespace Core.Arango.Linq.Internal
 
             else
             {
-                Write($".{name}(");
+                Write($"{name}(");
                 WriteNodes(arguments);
                 Write(")");
             }

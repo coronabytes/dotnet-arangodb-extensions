@@ -53,7 +53,7 @@ namespace Core.Arango.Linq.Internal.Util.Extensions
             return string.Join(delimiter, source.Select(selector));
         }
 
-        public static IEnumerable<(TFirst, TSecond)> Zip<TFirst, TSecond>(this IEnumerable<TFirst> first,
+        public static IEnumerable<(TFirst, TSecond)> ZipX<TFirst, TSecond>(this IEnumerable<TFirst> first,
             IEnumerable<TSecond> second)
         {
             return first.Zip(second, (x, y) => (x, y));
