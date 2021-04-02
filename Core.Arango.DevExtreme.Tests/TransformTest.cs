@@ -45,6 +45,21 @@ namespace Core.Arango.DevExtreme.Tests
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
 
+        
+        [Fact]
+        public void LookupTest()
+        {
+            var at = new ArangoTransform(new DataSourceLoadOptionsBase
+            {
+                Take = 20,
+                Filter = JArray.Parse(@"[[""name"",""contains"",""STP""],[""name"",""contains"",""mittelwort""],[""name"",""contains"",""letzteswort""]]")
+            }, new ArangoTransformSettings());
+
+            at.Transform(out var error);
+
+            _output.WriteLine(at.FilterExpression ?? "");
+        }
+
         [Fact]
         public void DateTimeTest()
         {
