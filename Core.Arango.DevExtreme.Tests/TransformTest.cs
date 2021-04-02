@@ -36,12 +36,12 @@ namespace Core.Arango.DevExtreme.Tests
                 Filter = JArray.Parse(@"[[""name"",""=="",true],[""name"",""<>"", false]]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
             var parameter = at.Parameter
                 .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
                 .ToList();
-
-            _output.WriteLine(at.FilterExpression);
+            
+            Assert.Equal("(x.Name == @P1 && x.Name != @P2)", at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
 
@@ -55,9 +55,8 @@ namespace Core.Arango.DevExtreme.Tests
                 Filter = JArray.Parse(@"[[""name"",""contains"",""STP""],[""name"",""contains"",""mittelwort""],[""name"",""contains"",""letzteswort""]]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
-
-            _output.WriteLine(at.FilterExpression ?? "");
+            Assert.True(at.Transform(out _));
+            Assert.Equal("(LOWER(x.Name) LIKE @P1) && (LOWER(x.Name) LIKE @P2) && (LOWER(x.Name) LIKE @P3)", at.FilterExpression);
         }
 
         [Fact]
@@ -70,12 +69,12 @@ namespace Core.Arango.DevExtreme.Tests
                     @"[[],""and"",[[""start"","">="",""2020-03-10T23:00:00.000Z""],""and"",[""start"",""<"",""2020-03-11T23:00:00.000Z""]]]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
             var parameter = at.Parameter
                 .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
                 .ToList();
 
-            _output.WriteLine(at.FilterExpression);
+            Assert.Equal("(true && (x.Start >= @P1 && x.Start < @P2))", at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
 
@@ -136,9 +135,17 @@ namespace Core.Arango.DevExtreme.Tests
                 }
             });
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
 
-            _output.WriteLine(at.AggregateExpression);
+            Assert.Equal(@"COLLECT
+ProjectKey = x.ProjectKey
+AGGREGATE
+TotalCount = LENGTH(1), SUMDuration = SUM(x.Duration), SUMRevenue = SUM(x.Revenue)
+SORT ProjectKey ASC
+RETURN {
+TotalCount, ProjectKey, ProjectKey_DV: DOCUMENT(AProject, ProjectKey).Name, SUMDuration, SUMRevenue
+}
+", at.AggregateExpression);
         }
 
         [Fact]
@@ -152,13 +159,12 @@ namespace Core.Arango.DevExtreme.Tests
                     @"[[""categoryKeys"",""in"",""d9d48fe3-03dc-e611-80dd-0050568a3ed2""],""or"",[""categoryKeys"",""in"",""ad22d4ec-03dc-e611-80dd-0050568a3ed2""]]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
-
-            _output.WriteLine(at.FilterExpression);
+            Assert.True(at.Transform(out _));
+            Assert.Equal("(@P1 IN x.CategoryKeys || @P2 IN x.CategoryKeys)", at.FilterExpression);
         }
 
         [Fact]
-        public void InArrayTest2()
+        public void ExtractFilters()
         {
             var at = new ArangoTransform(new DataSourceLoadOptionsBase
             {
@@ -179,9 +185,8 @@ namespace Core.Arango.DevExtreme.Tests
                 }
             });
 
-            at.Transform(out var error);
-
-            _output.WriteLine(at.FilterExpression);
+            Assert.True(at.Transform(out _));
+            Assert.Equal("(true || true)", at.FilterExpression);
         }
 
         [Fact]
@@ -202,9 +207,8 @@ namespace Core.Arango.DevExtreme.Tests
                 Filter = JArray.Parse(@"[[], ""and"", [""!"", [""scope"", ""=="", ""plan""]]]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
-
-            _output.WriteLine(at.FilterExpression);
+            Assert.True(at.Transform(out _));
+            Assert.Equal("(true && !(x.Scope == @P1))", at.FilterExpression);
         }
 
         [Fact]
@@ -220,13 +224,12 @@ namespace Core.Arango.DevExtreme.Tests
 
             var at = new ArangoTransform(loadOptions, new ArangoTransformSettings());
 
-            at.Transform(out var error);
-
-            _output.WriteLine(at.FilterExpression);
+            Assert.True(at.Transform(out _));
+            Assert.Equal("!((x.Type == @P1 || x.Type == @P2))", at.FilterExpression);
         }
 
         [Fact]
-        public void NegateExpression3()
+        public void Query()
         {
             var loadOptions = DxLoad(key =>
             {
@@ -256,9 +259,8 @@ namespace Core.Arango.DevExtreme.Tests
                 }
             });
 
-            at.Transform(out var error);
-
-            _output.WriteLine(at.FilterExpression);
+            Assert.True(at.Transform(out _));
+            Assert.Equal("(true && !((false || false)))", at.FilterExpression);
         }
 
         // JArray.Parse differs from AspNetCore
@@ -271,12 +273,13 @@ namespace Core.Arango.DevExtreme.Tests
                 Filter = JArray.Parse(@"[""parentKey"",""="",null]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
+            
             var parameter = at.Parameter
                 .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
                 .ToList();
 
-            _output.WriteLine(at.FilterExpression);
+            Assert.Equal("x.ParentKey == @P1", at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
 
@@ -290,12 +293,12 @@ namespace Core.Arango.DevExtreme.Tests
                 Filter = JArray.Parse(@"[[""duration"","">"",8],""and"",[""duration"","">"",8.5]]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
             var parameter = at.Parameter
                 .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
                 .ToList();
 
-            _output.WriteLine(at.FilterExpression);
+            Assert.Equal("(x.Duration > @P1 && x.Duration > @P2)", at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
 
@@ -310,12 +313,12 @@ namespace Core.Arango.DevExtreme.Tests
                 Filter = JArray.Parse(@"[""data.invoiceNumber"",""contains"",""123""]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
             var parameter = at.Parameter
                 .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
                 .ToList();
 
-            _output.WriteLine(at.FilterExpression);
+            Assert.Equal("LOWER(x.Data.InvoiceNumber) LIKE @P1", at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
 
@@ -331,12 +334,12 @@ namespace Core.Arango.DevExtreme.Tests
                 }
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
             var parameter = at.Parameter
                 .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
                 .ToList();
 
-            _output.WriteLine(at.FilterExpression);
+            Assert.Equal("LOWER(x.Data.InvoiceNumber) LIKE @P1", at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
 
@@ -349,12 +352,12 @@ namespace Core.Arango.DevExtreme.Tests
                 Filter = JArray.Parse(@"[[""name"",""contains"",""bad""],[""name"",""contains"",""""]]")
             }, new ArangoTransformSettings());
 
-            at.Transform(out var error);
+            Assert.True(at.Transform(out _));
             var parameter = at.Parameter
                 .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
                 .ToList();
 
-            _output.WriteLine(at.FilterExpression);
+            Assert.Equal("(LOWER(x.Name) LIKE @P1 && LOWER(x.Name) LIKE @P2)", at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
     }

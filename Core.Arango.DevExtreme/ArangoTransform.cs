@@ -460,7 +460,7 @@ namespace Core.Arango.DevExtreme
                     dxFilter[1] = JToken.FromObject("=");
             }
 
-            if (IsCriteria(dxFilter))
+            /*if (IsCriteria(dxFilter))
             {
                 var newList = new List<string>();
 
@@ -469,16 +469,19 @@ namespace Core.Arango.DevExtreme
                     if (element is IList l)
                     {
                         var r2 = GetMatchingFilter(l);
-                        newList.Add($" and ({r2})");
+                        newList.Add($" && ({r2})");
                     }
                     else
                     {
-                        newList.Add($"({element})");
+                        var x = element.ToString();
+
+                        if (x != "and" && x != "or")
+                            newList.Add($"({element})");
                     }
                 }
                 var r3 = string.Join(" ",newList);
                 return r3;
-            }
+            }*/
 
 
 
