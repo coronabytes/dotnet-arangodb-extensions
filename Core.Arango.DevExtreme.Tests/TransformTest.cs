@@ -56,7 +56,7 @@ namespace Core.Arango.DevExtreme.Tests
             }, new ArangoTransformSettings());
 
             Assert.True(at.Transform(out _));
-            Assert.Equal("(LOWER(x.Name) LIKE @P1) && (LOWER(x.Name) LIKE @P2) && (LOWER(x.Name) LIKE @P3)", at.FilterExpression);
+            Assert.Equal("(LOWER(x.Name) LIKE @P1 && LOWER(x.Name) LIKE @P2 && LOWER(x.Name) LIKE @P3)", at.FilterExpression);
         }
 
         [Fact]

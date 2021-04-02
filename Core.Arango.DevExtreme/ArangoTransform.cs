@@ -443,45 +443,69 @@ namespace Core.Arango.DevExtreme
             if (dxFilter.Count == 0)
                 return "true";
 
-            if (dxFilter.Count == 2)
+            if (dxFilter.Count >= 2)
             {
-                if ((dxFilter[0] is JValue v && v.Value is string s && s == "!"
-                     || dxFilter[0] is string s2 && s2 == "!") && dxFilter[1] is JArray)
+                if (dxFilter.Count == 2)
                 {
-                    var r = GetMatchingFilter((JArray) dxFilter[1], true);
-                    return $"!({r})";
+                    if ((dxFilter[0] is JValue v && v.Value is string s && s == "!"
+                         || dxFilter[0] is string s2 && s2 == "!") && dxFilter[1] is JArray)
+                    {
+                        var r = GetMatchingFilter((JArray) dxFilter[1], true);
+                        return $"!({r})";
+                    }
+
+                    dxFilter.Add(dxFilter[1]);
+
+                    if (dxFilter[0] is JArray)
+                        dxFilter[1] = JToken.FromObject("and");
+                    else
+                        dxFilter[1] = JToken.FromObject("=");
                 }
-
-                dxFilter.Add(dxFilter[1]);
-
-                if (dxFilter[0] is JArray)
-                    dxFilter[1] = JToken.FromObject("and");
                 else
-                    dxFilter[1] = JToken.FromObject("=");
+                {
+                    // [["X","=","A"],["X","=","B"],["X","=","C"]]
+                    var newDxFilterList = new List<object>();
+                    int i = 0;
+                    foreach (var element in dxFilter)
+                    {
+                        newDxFilterList.Add(element);
+
+                        if (element is JArray && i != dxFilter.Count - 1)
+                        {
+                            if ((dxFilter[i+1] is JArray))
+                                newDxFilterList.Add(JToken.FromObject("and"));
+                        }
+                            
+
+                        ++i;
+                    }
+
+                    dxFilter = newDxFilterList;
+                }
             }
 
-            /*if (IsCriteria(dxFilter))
-            {
-                var newList = new List<string>();
+            //if (IsCriteria(dxFilter))
+            //{
+            //    var newList = new List<string>();
 
-                foreach (var element in dxFilter)
-                {
-                    if (element is IList l)
-                    {
-                        var r2 = GetMatchingFilter(l);
-                        newList.Add($" && ({r2})");
-                    }
-                    else
-                    {
-                        var x = element.ToString();
+            //    foreach (var element in dxFilter)
+            //    {
+            //        if (element is IList l)
+            //        {
+            //            var r2 = GetMatchingFilter(l);
+            //            newList.Add($" and ({r2})");
+            //        }
+            //        else
+            //        {
+            //            var x = element.ToString();
 
-                        if (x != "and" && x != "or")
-                            newList.Add($"({element})");
-                    }
-                }
-                var r3 = string.Join(" ",newList);
-                return r3;
-            }*/
+            //           // if (x != "and" && x != "or")
+            //           newList.Add($"({element})");
+            //        }
+            //    }
+            //    var r3 = string.Join(" ",newList);
+            //    return r3;
+            //}
 
 
 
