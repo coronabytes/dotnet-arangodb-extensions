@@ -430,6 +430,11 @@ namespace Core.Arango.DevExtreme
             return sort;
         }
 
+        bool IsCriteria(IList item) {
+            return (item[0] is IList);
+        }
+
+   
         private string GetMatchingFilter(IList dxFilter, bool not = false)
         {
             if (dxFilter == null)
@@ -454,6 +459,28 @@ namespace Core.Arango.DevExtreme
                 else
                     dxFilter[1] = JToken.FromObject("=");
             }
+
+            if (IsCriteria(dxFilter))
+            {
+                var newList = new List<string>();
+
+                foreach (var element in dxFilter)
+                {
+                    if (element is IList l)
+                    {
+                        var r2 = GetMatchingFilter(l);
+                        newList.Add($" and ({r2})");
+                    }
+                    else
+                    {
+                        newList.Add($"({element})");
+                    }
+                }
+                var r3 = string.Join(" ",newList);
+                return r3;
+            }
+
+
 
             var op = dxFilter[1];
 
