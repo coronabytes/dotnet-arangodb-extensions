@@ -163,6 +163,22 @@ TotalCount, ProjectKey, ProjectKey_DV: DOCUMENT(AProject, ProjectKey).Name, SUMD
             Assert.Equal("(@P1 IN x.CategoryKeys || @P2 IN x.CategoryKeys)", at.FilterExpression);
         }
 
+
+        [Fact]
+        public void ContainsArrayTest()
+        {
+            var at = new ArangoTransform(new DataSourceLoadOptionsBase
+            {
+                Take = 20,
+                RequireTotalCount = false,
+                Filter = JArray.Parse(
+                    @"[""categoryKeys"",""acontains"",""d9d48fe3-03dc-e611-80dd-0050568a3ed2""]")
+            }, new ArangoTransformSettings());
+
+            Assert.True(at.Transform(out _));
+            Assert.Equal("CONTAINS(LOWER(x.CategoryKeys), @P1)", at.FilterExpression);
+        }
+
         [Fact]
         public void ExtractFilters()
         {

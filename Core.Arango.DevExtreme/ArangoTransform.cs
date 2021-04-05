@@ -549,6 +549,12 @@ namespace Core.Arango.DevExtreme
                 case "notcontains":
                     opString = "NOTCONTAINS";
                     break;
+                case "acontains":
+                    opString = "ACONTAINS";
+                    break;
+                case "notacontains":
+                    opString = "NOTACONTAINS";
+                    break;
                 case "startswith":
                     opString = "STARTSWITH";
                     break;
@@ -641,6 +647,12 @@ namespace Core.Arango.DevExtreme
                         case "ENDSWITH":
                             returnValue = $@"{propertyCase} LIKE {CreateParameter($"%{valueCase}")}'";
                             break;
+                        case "ACONTAINS":
+                            returnValue = $@"CONTAINS({propertyCase}, {CreateParameter(valueCase)})";
+                            break;
+                        case "NOTACONTAINS":
+                            returnValue = $@"NOT CONTAINS({propertyCase}, {CreateParameter(valueCase)})";
+                            break;
                         default:
                             boundParam = CreateParameter(s);
                             break;
@@ -671,7 +683,13 @@ namespace Core.Arango.DevExtreme
                                 returnValue = $@"{propertyCase} LIKE {CreateParameter($"{valueCase}%")}";
                                 break;
                             case "ENDSWITH":
-                                returnValue = $@"{propertyCase} LIKE {CreateParameter($"%{valueCase}")}'";
+                                returnValue = $@"{propertyCase} LIKE {CreateParameter($"%{valueCase}")}";
+                                break;
+                            case "ACONTAINS":
+                                returnValue = $@"CONTAINS({propertyCase}, {CreateParameter(valueCase)})";
+                                break;
+                            case "NOTACONTAINS":
+                                returnValue = $@"NOT CONTAINS({propertyCase}, {CreateParameter(valueCase)})";
                                 break;
                             default:
                                 boundParam = CreateParameter(v);
