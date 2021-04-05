@@ -18,9 +18,9 @@ jobs:
         dotnet:
           - 5.0.201
         arango: 
-          - "arangodb:3.6.9"
-          - "arangodb:3.7.9"
-
+          - "arangodb:3.6.11"
+          - "arangodb:3.7.10"
+          - "arangodb/arangodb-preview:3.8.0-alpha.1"
     steps:
     - uses: actions/checkout@v2
     

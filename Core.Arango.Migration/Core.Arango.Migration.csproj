@@ -28,4 +28,11 @@
     <PackageReference Include="Core.Arango" Version="3.8.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="ArangoDB.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
 </Project>
