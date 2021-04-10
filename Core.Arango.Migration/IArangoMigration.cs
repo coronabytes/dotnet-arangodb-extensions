@@ -6,7 +6,7 @@ namespace Core.Arango.Migration
     {
         public long Id { get; }
         public string Name { get; }
-        public Task Up(IArangoContext context, ArangoHandle handle, ArangoMigrationFlags flags);
+        public Task Up(IArangoContext context, ArangoHandle handle);
         public Task Down(IArangoContext context, ArangoHandle handle);
     }
 }
