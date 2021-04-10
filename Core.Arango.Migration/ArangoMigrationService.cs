@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Arango.Protocol;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Core.Arango.Migration
 {
@@ -224,6 +229,62 @@ namespace Core.Arango.Migration
                         Created = DateTime.UtcNow
                     });
                 }
+        }
+
+        /// <summary>
+        ///  Export collection data to ZipArchive
+        /// </summary>
+        public async Task ExportAsync(ArangoHandle db, Stream output)
+        {
+            using var zip = new ZipArchive(output, ZipArchiveMode.Create, true, Encoding.UTF8);
+
+            var serializer = new JsonSerializer();
+            var collections = await _arango.Collection.ListAsync(db);
+
+            foreach (var col in collections)
+            {
+                var i = 1;
+                await foreach (var batch in _arango.Document.ExportAsync<JObject>(db, col, true, 10, 10000, 30))
+                {
+                    var entry = zip.CreateEntry($"{col}.{i++.ToString().PadLeft(4, '0')}.json",
+                        CompressionLevel.Fastest);
+                    await using var stream = entry.Open();
+                    await using var sw = new StreamWriter(stream);
+                    using var writer = new JsonTextWriter(sw);
+
+                    serializer.Serialize(writer, batch);
+                }
+            }
+        }
+
+        /// <summary>
+        ///  Import collection data from ZipArchive
+        /// </summary>
+        public async Task ImportAsync(ArangoHandle db, Stream input)
+        { 
+            using var zip = new ZipArchive(input, ZipArchiveMode.Read);
+
+            var dataBaseExists = await _arango.Database.ExistAsync(db);
+            if (!dataBaseExists)
+                await _arango.Database.CreateAsync(db);
+
+            var serializer = new JsonSerializer();
+
+            foreach (var entry in zip.Entries)
+            {
+                if (entry.Name.EndsWith(".json"))
+                {
+                    var col = entry.Name.Substring(0, entry.Name.IndexOf('.'));
+
+                    await using var stream = entry.Open();
+                    using var sr = new StreamReader(stream);
+                    using var reader = new JsonTextReader(sr);
+
+                    var docs = serializer.Deserialize<List<JObject>>(reader);
+
+                    await _arango.Document.ImportAsync(db, col, docs);
+                }
+            }
         }
 
         private class MigrationEntity
