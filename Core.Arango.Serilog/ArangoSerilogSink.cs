@@ -35,9 +35,7 @@ namespace Core.Arango.Serilog
                 if (!_arango.Database.ExistAsync(_database).Result)
                     _arango.Database.CreateAsync(_database).Wait();
 
-                var collections = _arango.Collection.ListAsync(_database).Result;
-
-                if (!collections.Contains(collection))
+                if (!_arango.Collection.ExistAsync(_database, collection).Result)
                     _arango.Collection.CreateAsync(_database, _collection, ArangoCollectionType.Document).Wait();
             }
             catch (Exception)

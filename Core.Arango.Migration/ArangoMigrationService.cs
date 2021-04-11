@@ -55,33 +55,22 @@ namespace Core.Arango.Migration
 
             foreach (var collection in collections)
             {
-                var indices = await _arango.Index.ListAsync(db, collection, cancellationToken);
+                var indices = await _arango.Index.ListAsync(db, collection.Name);
 
                 var c = new ArangoCollectionIndices
                 {
-                    Collection = new ArangoCollection
-                    {
-                        Name = collection
-                    },
-                    Indices = indices.Select(i => new ArangoIndex
-                    {
-                        Name = i
-                    }).ToList()
+                    Collection = collection,
+                    Indices = indices.ToList()
                 };
 
                 snapshot.Collections.Add(c);
             }
 
-            snapshot.Analyzers = analyzers;
-            snapshot.Graphs = graphs.Select(g => new ArangoGraph
-            {
-                Name = g
-            }).ToList();
+            snapshot.Analyzers = analyzers.ToList();
+            snapshot.Graphs = graphs.ToList();
 
-            snapshot.Views = views.Select(v => new ArangoView
-            {
-                Name = v
-            }).ToList();
+            foreach (var view in views)
+                snapshot.Views.Add(await _arango.View.GetPropertiesAsync(db, view.Name));
 
             return snapshot;
         }
@@ -204,7 +193,7 @@ namespace Core.Arango.Migration
         {
             var cols = await _arango.Collection.ListAsync(db);
 
-            if (!cols.Contains(HistoryCollection))
+            if (cols.All(x => x.Name != HistoryCollection))
                 await _arango.Collection.CreateAsync(db, HistoryCollection, ArangoCollectionType.Document);
 
             var latest =
@@ -238,21 +227,20 @@ namespace Core.Arango.Migration
         {
             using var zip = new ZipArchive(output, ZipArchiveMode.Create, true, Encoding.UTF8);
 
-            var serializer = new JsonSerializer();
+            var serializer = _arango.Configuration.Serializer;
             var collections = await _arango.Collection.ListAsync(db);
 
             foreach (var col in collections)
             {
                 var i = 1;
-                await foreach (var batch in _arango.Document.ExportAsync<JObject>(db, col, true, 10, 10000, 30))
+                await foreach (var batch in _arango.Document.ExportAsync<object>(db, col.Name, true, 10, 10000, 30))
                 {
                     var entry = zip.CreateEntry($"{col}.{i++.ToString().PadLeft(4, '0')}.json",
                         CompressionLevel.Fastest);
                     await using var stream = entry.Open();
                     await using var sw = new StreamWriter(stream);
-                    using var writer = new JsonTextWriter(sw);
-
-                    serializer.Serialize(writer, batch);
+                    //using var writer = new JsonTextWriter(sw);
+                    await sw.WriteAsync(serializer.Serialize(batch));
                 }
             }
         }
@@ -268,7 +256,7 @@ namespace Core.Arango.Migration
             if (!dataBaseExists)
                 await _arango.Database.CreateAsync(db);
 
-            var serializer = new JsonSerializer();
+            var serializer = _arango.Configuration.Serializer;
 
             foreach (var entry in zip.Entries)
             {
@@ -278,9 +266,9 @@ namespace Core.Arango.Migration
 
                     await using var stream = entry.Open();
                     using var sr = new StreamReader(stream);
-                    using var reader = new JsonTextReader(sr);
+                    //using var reader = new JsonTextReader(sr);
 
-                    var docs = serializer.Deserialize<List<JObject>>(reader);
+                    var docs = serializer.Deserialize<List<object>>(await sr.ReadToEndAsync());
 
                     await _arango.Document.ImportAsync(db, col, docs);
                 }

@@ -33,9 +33,7 @@ namespace Core.Arango.DataProtection
                 if (!_context.Database.ExistAsync(_database).Result)
                     _context.Database.CreateAsync(_database).Wait();
 
-                var collections = _context.Collection.ListAsync(_database).Result;
-
-                if (!collections.Contains(collection))
+                if (!_context.Collection.ExistAsync(_database, collection).Result)
                     _context.Collection.CreateAsync(_database, _collection, ArangoCollectionType.Document).Wait();
             }
             catch (Exception e)
