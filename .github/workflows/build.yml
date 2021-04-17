@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         dotnet:
-          - 5.0.201
+          - 5.0.202
         arango: 
           - "arangodb:3.6.11"
           - "arangodb:3.7.10"

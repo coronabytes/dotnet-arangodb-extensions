@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Core.Arango.Protocol;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Core.Arango.Migration.Tests
 {
@@ -16,8 +18,30 @@ namespace Core.Arango.Migration.Tests
             await Arango.Database.CreateAsync("test");
         }
 
+        /*[Fact]
+        public async Task ImportExport()
+        {
+            var migrationService = new ArangoMigrationService(Arango);
+
+            var structure = await migrationService.GetCurrentStructureAsync("source");
+
+            await Arango.Database.CreateAsync("target");
+
+            await migrationService.ApplyStructureUpdateAsync("target", structure);
+
+            {
+                await using var fs = File.Create("export.zip", 1024 * 1024);
+                await migrationService.ExportAsync("source", fs);
+            }
+
+            {
+                await using var fs = File.OpenRead("export.zip");
+                await migrationService.ImportAsync("source", fs);
+            }
+        }*/
+
         [Fact]
-        public async Task Migrate()
+        public async Task Up()
         {
             var migrationService = new ArangoMigrationService(Arango);
 
