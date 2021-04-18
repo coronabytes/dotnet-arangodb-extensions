@@ -11,19 +11,99 @@ See [dotnet-arangodb](https://github.com/coronabytes/dotnet-arangodb)
 | [Core.Arango.Linq](https://www.nuget.org/packages/Core.Arango.Linq) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Linq) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Linq) | dotnet add package Core.Arango.Linq |
 | [Core.Arango.Serilog](https://www.nuget.org/packages/Core.Arango.Serilog) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Serilog) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Serilog) | dotnet add package Core.Arango.Serilog |
 
-# Snippets
-
-## Migration
+# Migration
 - Ensures the Arango structure / model is up-to-date
 - Synchronises collection, index, graph, analyzer, views and custom functions from code model to arango db
 - Database export and import support with zip-archives
 - Full and partial updates
 - Optional history collection for advanced migration scenarios, like running transformation queries
-```csharp
+- Still under heavy development, might toss some functions around
 
+## Extract structure to code model
+```csharp
+var migrationService = new ArangoMigrator(Arango);
+
+var structure = await migrationService.GetStructureAsync("source-database");
 ```
 
-## DataProtection
+## Apply structure from code model (dry run)
+```csharp
+var migrationService = new ArangoMigrator(Arango);
+
+await migrationService.ApplyStructureAsync("target-database", structure, new ArangoMigrationOptions
+{
+    DryRun = true,
+    Notify = n =>
+    {
+        if (n.State != ArangoMigrationState.Identical)
+	    _output.WriteLine($"{n.State} {n.Object} {n.Name}");
+    }
+});
+```
+
+## Apply structure from code model 
+```csharp
+var migrationService = new ArangoMigrator(Arango);
+
+await migrationService.ApplyStructureAsync("target-database", new ArangoStructure
+{
+    Collections = new List<ArangoCollectionIndices>
+    {
+	    new ()
+	    {
+		Collection = new ArangoCollection
+		{
+		    Name = "Project",
+		    Type = ArangoCollectionType.Document
+		},
+		Indices = new List<ArangoIndex>
+		{
+		    new ()
+		    {
+			Name = "IDX_ParentKey",
+			Fields = new List<string> {"ParentKey"},
+			Type = ArangoIndexType.Hash
+		    }
+		}
+	    },
+	    new ()
+	    {
+		Collection = new ArangoCollection
+		{
+		    Name = "Activity",
+		    Type = ArangoCollectionType.Document
+		},
+		Indices = new List<ArangoIndex>
+		{
+		    new ()
+		    {
+			Name = "IDX_ProjectKey",
+			Fields = new List<string> {"ProjectKey"},
+			Type = ArangoIndexType.Hash
+		    }
+		}
+	    }
+    }
+});
+```
+
+## Export database with structure and data to zip archive
+```csharp
+var migrationService = new ArangoMigrator(Arango);
+
+await using var fs = File.Create("export.zip", 1024 * 1024);
+await migrationService.ExportAsync("source-database", fs, ArangoMigrationScope.Data | ArangoMigrationScope.Structure);
+```
+
+## Import database with structure and data from zip archive
+```csharp
+var migrationService = new ArangoMigrator(Arango);
+
+await using var fs = File.OpenRead("export.zip");
+await migrationService.ImportAsync("target-database", fs, ArangoMigrationScope.Data | ArangoMigrationScope.Structure);
+```
+
+# DataProtection
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {
@@ -36,7 +116,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-## DevExtreme
+# DevExtreme
 - Translates DevExtreme queries to AQL with filtering, sorting, grouping and summaries on a 'best effort basis'
 - Parameters are escaped with bindvars
 - Property names 
@@ -78,7 +158,7 @@ public async Task<ActionResult<DxLoadResult>> DxQuery([FromQuery] DataSourceLoad
 }
 ```
 
-## Serilog
+# Serilog
 ```csharp
 webBuilder.UseSerilog((c, log) =>
 {
@@ -101,7 +181,7 @@ webBuilder.UseSerilog((c, log) =>
 });
 ```
 
-## LINQ to AQL
+# LINQ to AQL
 - Highly experimental LINQ provider for IArangoContext
 - It literally translates C# to AQL (ExpressionTreeToString)
 - If the there are any constructs producing invalid AQL, you're welcome to make a PR with fix and unittest.
