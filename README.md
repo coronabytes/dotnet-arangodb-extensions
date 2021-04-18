@@ -3,14 +3,25 @@
 # Extensions for .NET ArangoDB Driver
 See [dotnet-arangodb](https://github.com/coronabytes/dotnet-arangodb)
 
-| Extension   | Nuget        |
-| :---        | :---    |
-| [Core.Arango.DataProtection](https://www.nuget.org/packages/Core.Arango.DataProtection) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DataProtection) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DataProtection) |
-| [Core.Arango.DevExtreme](https://www.nuget.org/packages/Core.Arango.DevExtreme) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DevExtreme) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DevExtreme) |
-| [Core.Arango.Linq](https://www.nuget.org/packages/Core.Arango.Linq) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Linq) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Linq) |
-| [Core.Arango.Serilog](https://www.nuget.org/packages/Core.Arango.Serilog) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Serilog) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Serilog) |
+| Extension   | Nuget        | Command |
+| :---        | :---         | :---    |
+| [Core.Arango.Migration](https://www.nuget.org/packages/Core.Arango.Migration) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Migration) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Migration) | dotnet add package Core.Arango.Migration  |
+| [Core.Arango.DataProtection](https://www.nuget.org/packages/Core.Arango.DataProtection) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DataProtection) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DataProtection) | dotnet add package Core.Arango.DataProtection |
+| [Core.Arango.DevExtreme](https://www.nuget.org/packages/Core.Arango.DevExtreme) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.DevExtreme) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.DevExtreme) | dotnet add package Core.Arango.DevExtreme |
+| [Core.Arango.Linq](https://www.nuget.org/packages/Core.Arango.Linq) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Linq) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Linq) | dotnet add package Core.Arango.Linq |
+| [Core.Arango.Serilog](https://www.nuget.org/packages/Core.Arango.Serilog) | ![Nuget](https://img.shields.io/nuget/v/Core.Arango.Serilog) ![Nuget](https://img.shields.io/nuget/dt/Core.Arango.Serilog) | dotnet add package Core.Arango.Serilog |
 
 # Snippets
+
+## Migration
+- Ensures the Arango structure / model is up-to-date
+- Synchronises collection, index, graph, analyzer, views and custom functions from code model to arango db
+- Database export and import support with zip-archives
+- Full and partial updates
+- Optional history collection for advanced migration scenarios, like running transformation queries
+```csharp
+
+```
 
 ## DataProtection
 ```csharp
