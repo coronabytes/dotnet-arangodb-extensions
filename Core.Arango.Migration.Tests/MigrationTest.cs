@@ -10,42 +10,78 @@ namespace Core.Arango.Migration.Tests
 {
     public class MigrationTest : IAsyncLifetime
     {
+        private readonly ITestOutputHelper _output;
+
+        public MigrationTest(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
         protected readonly IArangoContext Arango =
             new ArangoContext($"Server=http://localhost:8529;Realm=CI-{Guid.NewGuid():D};User=root;Password=;");
+
+        protected readonly IArangoContext Arango2 =
+            new ArangoContext($"Server=http://localhost:8529;Realm=stp;User=root;Password=;");
 
         public async Task InitializeAsync()
         {
             await Arango.Database.CreateAsync("test");
         }
 
-        /*[Fact]
+        [Fact]
+        public async Task Compare()
+        {
+            const string source = "96b02ae6-bda4-43e2-b83e-28293913ddb5";
+            const string target = "target";
+
+            if (!await Arango2.Database.ExistAsync(source))
+                return;
+
+            var migrationService = new ArangoMigrator(Arango2);
+            var structure = await migrationService.GetStructureAsync(source);
+
+            await migrationService.ApplyStructureAsync(target, structure, new ArangoMigrationOptions
+            {
+                DryRun = true,
+                Notify = n =>
+                {
+                    if (n.State != ArangoMigrationState.Identical)
+                        _output.WriteLine($"{n.State} {n.Object} {n.Name}");
+                }
+            });
+        }
+
+        [Fact]
         public async Task ImportExport()
         {
-            var migrationService = new ArangoMigrationService(Arango);
+            const string source = "96b02ae6-bda4-43e2-b83e-28293913ddb5";
+            const string target = "target";
 
-            var structure = await migrationService.GetCurrentStructureAsync("source");
+            if (!await Arango2.Database.ExistAsync(source))
+                return;
 
-            await Arango.Database.CreateAsync("target");
+            if (await Arango2.Database.ExistAsync(target))
+                await Arango2.Database.DropAsync(target);
 
-            await migrationService.ApplyStructureUpdateAsync("target", structure);
-
+            var migrationService = new ArangoMigrator(Arango2);
+            
             {
                 await using var fs = File.Create("export.zip", 1024 * 1024);
-                await migrationService.ExportAsync("source", fs);
+                await migrationService.ExportAsync(source, fs, ArangoMigrationScope.Data | ArangoMigrationScope.Structure);
             }
 
             {
                 await using var fs = File.OpenRead("export.zip");
-                await migrationService.ImportAsync("source", fs);
+                await migrationService.ImportAsync(target, fs, ArangoMigrationScope.Data | ArangoMigrationScope.Structure);
             }
-        }*/
+        }
 
         [Fact]
         public async Task Up()
         {
-            var migrationService = new ArangoMigrationService(Arango);
+            var migrationService = new ArangoMigrator(Arango);
 
-            await migrationService.ApplyStructureUpdateAsync("test", new ArangoStructureUpdate
+            await migrationService.ApplyStructureAsync("test", new ArangoStructure
             {
                 Collections = new List<ArangoCollectionIndices>
                 {
@@ -86,7 +122,7 @@ namespace Core.Arango.Migration.Tests
                 }
             });
 
-            await migrationService.ApplyStructureUpdateAsync("test", new ArangoStructureUpdate
+            await migrationService.ApplyStructureAsync("test", new ArangoStructure
             {
                 Views = new List<ArangoView>
                 {

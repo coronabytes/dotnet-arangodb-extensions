@@ -4,13 +4,8 @@ namespace Core.Arango.Migration
 {
     public class ArangoMigrationOptions
     {
+        public bool DryRun { get; set; }
         public bool DropExcess { get; set; }
-    }
-
-    [Flags]
-    public enum ArangoMigrationScope
-    {
-        Structure,
-        Data
+        public Action<ArangoMigrationNotification> Notify { get; set; }
     }
 }

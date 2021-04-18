@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Core.Arango.Migration</name>
+    </assembly>
+    <members>
+        <member name="T:Core.Arango.Migration.ArangoCollectionIndices">
+            <summary>
+             Arango collection with index definitions
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoCollectionIndices.Collection">
+            <summary>
+             collection
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoCollectionIndices.Indices">
+            <summary>
+             index definitions
+            </summary>
+        </member>
+        <member name="T:Core.Arango.Migration.ArangoMigrationScope">
+            <summary>
+              Import / Export scope
+            </summary>
+        </member>
+        <member name="F:Core.Arango.Migration.ArangoMigrationScope.Structure">
+            <summary>
+             Include / Apply structure
+            </summary>
+        </member>
+        <member name="F:Core.Arango.Migration.ArangoMigrationScope.Data">
+            <summary>
+             Include / Apply data in collections
+            </summary>
+        </member>
+        <member name="T:Core.Arango.Migration.ArangoMigrationState">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:Core.Arango.Migration.ArangoMigrator">
+            <summary>
+               Arango Migration System
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.#ctor(Core.Arango.IArangoContext)">
+            <summary>
+             Arango Migration System
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoMigrator.HistoryCollection">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.Compare(System.Object,System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.GetStructureAsync(Core.Arango.ArangoHandle,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.ApplyStructureAsync(Core.Arango.ArangoHandle,Core.Arango.Migration.ArangoStructure,Core.Arango.Migration.ArangoMigrationOptions)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.AddMigrations(System.Reflection.Assembly)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.AddMigration(Core.Arango.Migration.IArangoMigration)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.UpgradeAsync(Core.Arango.ArangoHandle)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.ExportAsync(Core.Arango.ArangoHandle,System.IO.Stream,Core.Arango.Migration.ArangoMigrationScope)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoMigrator.ImportAsync(Core.Arango.ArangoHandle,System.IO.Stream,Core.Arango.Migration.ArangoMigrationScope)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Core.Arango.Migration.ArangoStructure">
+            <summary>
+            Structure information of an ArangoDB database
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoStructure.Collections">
+            <summary>
+             collections
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoStructure.Graphs">
+            <summary>
+             graphs
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoStructure.Analyzers">
+            <summary>
+             analyzers
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoStructure.Views">
+            <summary>
+            views
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.ArangoStructure.Functions">
+            <summary>
+             functions
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.IArangoMigrator.HistoryCollection">
+            <summary>
+             Name of the migration history collection
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.Compare(System.Object,System.Object)">
+            <summary>
+             Compare two objects via the default serializer
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.GetStructureAsync(Core.Arango.ArangoHandle,System.Threading.CancellationToken)">
+            <summary>
+             Get structure from database
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.ApplyStructureAsync(Core.Arango.ArangoHandle,Core.Arango.Migration.ArangoStructure,Core.Arango.Migration.ArangoMigrationOptions)">
+            <summary>
+             Apply structure to database
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.AddMigrations(System.Reflection.Assembly)">
+            <summary>
+                Add Migrations from assembly
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.AddMigration(Core.Arango.Migration.IArangoMigration)">
+            <summary>
+                Add migration manually
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.UpgradeAsync(Core.Arango.ArangoHandle)">
+            <summary>
+                Apply missing migrations up to latest
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.ExportAsync(Core.Arango.ArangoHandle,System.IO.Stream,Core.Arango.Migration.ArangoMigrationScope)">
+            <summary>
+                Export database to zip archive stream
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigrator.ImportAsync(Core.Arango.ArangoHandle,System.IO.Stream,Core.Arango.Migration.ArangoMigrationScope)">
+            <summary>
+                Import database from zip archive stream and replace existing data
+            </summary>
+        </member>
+    </members>
+</doc>
