@@ -14,6 +14,9 @@ See [dotnet-arangodb](https://github.com/coronabytes/dotnet-arangodb)
 # Migration
 - Ensures the Arango structure / model is up-to-date
 - Synchronises collection, index, graph, analyzer, views and custom functions from code model to arango db
+  - objects are compared and if they differ they will be dropped and recreated
+  - object cannot be renamed with this method as they are matched by name and not by id
+  - collections cannot be updated (data-loss) with this method, only new ones can be created and old ones dropped
 - Database export and import support with zip-archives
 - Full and partial updates
 - Optional history collection for advanced migration scenarios, like running transformation queries
