@@ -15,7 +15,7 @@ See [dotnet-arangodb](https://github.com/coronabytes/dotnet-arangodb)
 - Ensures the Arango structure / model is up-to-date
 - Synchronises collection, index, graph, analyzer, views and custom functions from code model to arango db
   - objects are compared and if they differ they will be dropped and recreated
-  - object cannot be renamed with this method as they are matched by name and not by id
+  - objects cannot be renamed with this method as they are matched by name and not by id
   - collections cannot be updated (data-loss) with this method, only new ones can be created and old ones dropped
 - Database export and import support with zip-archives
 - Full and partial updates
@@ -104,6 +104,28 @@ var migrationService = new ArangoMigrator(Arango);
 
 await using var fs = File.OpenRead("export.zip");
 await migrationService.ImportAsync("target-database", fs, ArangoMigrationScope.Data | ArangoMigrationScope.Structure);
+```
+
+## Import database with structure and data from zip archive
+```csharp
+var migrator = new ArangoMigrator(Arango);
+migrator.AddMigrations(typeof(Program).Assembly);
+await migrator.UpgradeAsync("target-database");
+
+public class M20210401_001 : IArangoMigration
+{
+    public long Id => 20210401_001;
+    public string Name => "Initial";
+    public async Task Up(IArangoMigrator migrator, ArangoHandle handle)
+    {
+        await migrator.ApplyStructureAsync(...);
+    }
+
+    public lic Task Down(IArangoMigrator migrator, ArangoHandle handle)
+    {
+        throw new NotImplementedException();
+    }
+}
 ```
 
 # DataProtection
