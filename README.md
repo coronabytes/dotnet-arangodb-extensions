@@ -120,15 +120,16 @@ await migrator.UpgradeAsync("target-database");
 // sample migration / downgrades not yet supported
 public class M20210401_001 : IArangoMigration
 {
-    public long Id => 20210401_001;
+    public long Id => 20210401_001; // sortable unique id
     public string Name => "Initial";
+    
     public async Task Up(IArangoMigrator migrator, ArangoHandle handle)
     {
         await migrator.ApplyStructureAsync(...);	
 	await migrator.Context.Query.ExecuteAsync(...);
     }
 
-    public lic Task Down(IArangoMigrator migrator, ArangoHandle handle)
+    public Task Down(IArangoMigrator migrator, ArangoHandle handle)
     {
         throw new NotImplementedException();
     }
