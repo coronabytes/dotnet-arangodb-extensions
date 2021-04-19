@@ -14,6 +14,8 @@ namespace Core.Arango.Linq.Tests
         public int Value { get; set; }
 
         public DateTime StartDate { get; set; }
+        
+        public List<string> StringList { get; set; }
     }
 
     public class UnitTest1 : IAsyncLifetime
@@ -56,7 +58,8 @@ namespace Core.Arango.Linq.Tests
         public void TestWhereDateAdd()
         {
             var test = Arango.AsQueryable<Project>("test")
-                .Where(x => Aql.DATE_ADD(x.StartDate, 1, "day") >= DateTime.UtcNow)
+                // .Where(x =>  Aql.DATE_ADD(x.StartDate, 1, "day") >= DateTime.UtcNow)
+                .Where(x =>  x.StartDate.AddDays(1) >= DateTime.UtcNow)
                 .ToList();
 
             test.ToArray();
@@ -74,6 +77,23 @@ namespace Core.Arango.Linq.Tests
             {
                 Assert.Contains(t.Value, list);
             }
+        }
+        
+        /// <summary>
+        /// expected query: FOR x IN Project FILTER POSITION(x.Tags, @searchString) > 0 RETURN x
+        /// </summary>
+        [Fact]
+        public void TestListContainsElement()
+        {
+            var tag = "hello";
+            /*var test = Arango
+                .AsQueryable<Project>("test")
+                .Where(x => x.StringList.Any(t => t == tag))
+                .ToList();
+            foreach (var t in test)
+            {
+                Assert.Contains(tag, t.StringList);
+            }*/
         }
 
         /// <summary>
@@ -103,12 +123,47 @@ namespace Core.Arango.Linq.Tests
             }
         }
 
+        class ProjectProj
+        {
+            public string Name { get; set; }
+        }
+        
+        /// <summary>
+        /// expected query: FOR x IN Project FILTER x.Name == @p || x.Name == @pUnique RETURN {Name: x.Name}
+        /// </summary>
+        [Fact]
+        public void TestObjectProjection()
+        {
+            var test = Arango.AsQueryable<Project>("test")
+                .Where(x => x.Name == "A" || x.Name == "B \" RETURN 42")
+                .Select(x => new
+                {
+                    Name = x.Name,
+                    Fussbad = x.Value
+                })
+                .ToList();
+            Assert.True(test.All(x => x.Fussbad > -1));
+            Assert.True(test.Count == 1);
+        }
+        
+        [Fact]
+        public void TestMultipleWheres()
+        {
+            var test = Arango.AsQueryable<Project>("test")
+                .Where(x => x.Value == 3 || x.Value == 1)
+                .Where(x => x.Name == "B" || x.Name == "C")
+                .ToList();
+            Assert.Single(test);
+            Assert.True(test.Single().Name == "C");
+        }
+        
         /// <summary>
         /// expected query: FOR x IN Project FILTER x.Name == @p || x.Name == @pUnique RETURN x.Name
         /// </summary>
         [Fact]
         public void TestInjection()
         {
+            // var test = Arango.AsQueryable<Project>("test").Where(x => x.Name == "A" || x.Name == "B \" RETURN 42").Select(x => new ProjectProj {Name = x.Name}).ToList();
             var test = Arango.AsQueryable<Project>("test").Where(x => x.Name == "A" || x.Name == "B \" RETURN 42").Select(x => x.Name).ToList();
             Assert.True(test.Count == 1);
         }
@@ -209,21 +264,24 @@ namespace Core.Arango.Linq.Tests
                 Key = Guid.NewGuid(),
                 Name = "A",
                 Value = 1,
-                StartDate = new DateTime(2020, 04, 03).ToUniversalTime()
+                StartDate = new DateTime(2020, 04, 03).ToUniversalTime(),
+                StringList = new List<string>() {"hello", "you"}
             });
             await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
                 Key = Guid.NewGuid(),
                 Name = "B",
                 Value = 2,
-                StartDate = DateTime.Now.AddDays(-1).ToUniversalTime()
+                StartDate = DateTime.Now.AddDays(-1).ToUniversalTime(),
+                StringList = new List<string>() {"hello2", "you"}
             });
             await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
                 Key = Guid.NewGuid(),
                 Name = "C",
                 Value = 3,
-                StartDate = new DateTime(3021, 1, 5).ToUniversalTime()
+                StartDate = new DateTime(3021, 1, 5).ToUniversalTime(),
+                StringList = new List<string>() {"me", "you", "everybody"}
             });
         }
 

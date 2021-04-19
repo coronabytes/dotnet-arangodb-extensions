@@ -55,7 +55,7 @@ namespace Core.Arango.Linq
         public TResult Execute<TResult>(Expression expression)
         {
             // var type = typeof(TResult);
-            var isEnumerable = typeof(TResult).Name == "IEnumerable`1";
+            var isEnumerable = typeof(TResult).IsGenericType &&  typeof(TResult).GetGenericTypeDefinition() == typeof(IEnumerable<>);
 
             var elementType = TypeSystem.GetElementType(expression.Type);
 
@@ -64,10 +64,15 @@ namespace Core.Arango.Linq
                 Collection = _collection
             };
 
+            
+
             var query = writer.ToString();
             var bindVars = writer.BindVars;
+            
+            var b = AqlRequest.FromExpression(expression, _collection);
+            var (query2, bindVars2) = b.ToAqlQuery();
 
-            var res = _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query, bindVars).Result;
+            var res = _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query2, bindVars2).Result;
             // var resType = res.GetType();
 
             return (TResult) res;
