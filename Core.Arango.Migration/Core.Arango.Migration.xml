@@ -49,6 +49,9 @@
              Arango Migration System
             </summary>
         </member>
+        <member name="P:Core.Arango.Migration.ArangoMigrator.Context">
+            <inheritdoc/>
+        </member>
         <member name="P:Core.Arango.Migration.ArangoMigrator.HistoryCollection">
             <inheritdoc/>
         </member>
@@ -104,6 +107,48 @@
         <member name="P:Core.Arango.Migration.ArangoStructure.Functions">
             <summary>
              functions
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.ArangoStructure.Serialize">
+            <summary>
+             Serialize to C# object initializer code
+            </summary>
+            <param name="o"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Core.Arango.Migration.IArangoMigration">
+            <summary>
+             Arango Migration
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.IArangoMigration.Id">
+            <summary>
+             Unique sortable migration id (e.g. 2020_12_24_001)
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.IArangoMigration.Name">
+            <summary>
+              Name of the migration
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigration.Up(Core.Arango.Migration.IArangoMigrator,Core.Arango.ArangoHandle)">
+            <summary>
+             Changes in this migration
+            </summary>
+        </member>
+        <member name="M:Core.Arango.Migration.IArangoMigration.Down(Core.Arango.Migration.IArangoMigrator,Core.Arango.ArangoHandle)">
+            <summary>
+             Reverse changes from this migration
+            </summary>
+        </member>
+        <member name="T:Core.Arango.Migration.IArangoMigrator">
+            <summary>
+             Migrator Interface
+            </summary>
+        </member>
+        <member name="P:Core.Arango.Migration.IArangoMigrator.Context">
+            <summary>
+              Arango Context
             </summary>
         </member>
         <member name="P:Core.Arango.Migration.IArangoMigrator.HistoryCollection">

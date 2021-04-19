@@ -2,11 +2,29 @@
 
 namespace Core.Arango.Migration
 {
+    /// <summary>
+    ///  Arango Migration
+    /// </summary>
     public interface IArangoMigration
     {
+        /// <summary>
+        ///  Unique sortable migration id (e.g. 2020_12_24_001)
+        /// </summary>
         public long Id { get; }
+
+        /// <summary>
+        ///   Name of the migration
+        /// </summary>
         public string Name { get; }
-        public Task Up(IArangoContext context, ArangoHandle handle);
-        public Task Down(IArangoContext context, ArangoHandle handle);
+
+        /// <summary>
+        ///  Changes in this migration
+        /// </summary>
+        public Task Up(IArangoMigrator migrator, ArangoHandle handle);
+
+        /// <summary>
+        ///  Reverse changes from this migration
+        /// </summary>
+        public Task Down(IArangoMigrator migrator, ArangoHandle handle);
     }
 }

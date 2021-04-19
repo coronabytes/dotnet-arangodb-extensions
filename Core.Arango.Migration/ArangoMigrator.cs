@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -26,6 +27,9 @@ namespace Core.Arango.Migration
         {
             _arango = arango;
         }
+
+        /// <inheritdoc/>
+        public IArangoContext Context => _arango;
 
         /// <inheritdoc/>
         public string HistoryCollection { get; set; } = "MigrationHistory";
@@ -552,7 +556,7 @@ namespace Core.Arango.Migration
             foreach (var x in _migrations.OrderBy(x=>x.Id))
                 if (!version.HasValue || x.Id > version.Value)
                 {
-                    await x.Up(_arango, db);
+                    await x.Up(this, db);
 
                     await _arango.Document.CreateAsync(db, HistoryCollection, new MigrationEntity
                     {

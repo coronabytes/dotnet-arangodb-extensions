@@ -5,8 +5,16 @@ using System.Threading.Tasks;
 
 namespace Core.Arango.Migration
 {
+    /// <summary>
+    ///  Migrator Interface
+    /// </summary>
     public interface IArangoMigrator
     {
+        /// <summary>
+        ///   Arango Context
+        /// </summary>
+        IArangoContext Context { get; }
+
         /// <summary>
         ///  Name of the migration history collection
         /// </summary>

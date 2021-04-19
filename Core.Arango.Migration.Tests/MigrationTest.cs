@@ -77,7 +77,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async Task Up()
+        public async Task ManualUp()
         {
             var migrationService = new ArangoMigrator(Arango);
 
@@ -143,6 +143,18 @@ namespace Core.Arango.Migration.Tests
                     }
                 }
             });
+        }
+
+        [Fact]
+        public async Task AutoMigration()
+        {
+            var migrator = new ArangoMigrator(Arango);
+            migrator.AddMigrations(typeof(MigrationTest).Assembly);
+            await migrator.UpgradeAsync("test");
+
+            var structure = await migrator.GetStructureAsync("test");
+
+            _output.WriteLine(structure.Serialize());
         }
 
         public async Task DisposeAsync()
