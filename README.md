@@ -106,19 +106,26 @@ await using var fs = File.OpenRead("export.zip");
 await migrationService.ImportAsync("target-database", fs, ArangoMigrationScope.Data | ArangoMigrationScope.Structure);
 ```
 
-## Import database with structure and data from zip archive
+## Advanced migrations with history collection
 ```csharp
 var migrator = new ArangoMigrator(Arango);
+migrator.HistoryCollection = "MigrationHistory";
+
+// load all migrations from assembly
 migrator.AddMigrations(typeof(Program).Assembly);
+
+// apply all migrations up to latest
 await migrator.UpgradeAsync("target-database");
 
+// sample migration / downgrades not yet supported
 public class M20210401_001 : IArangoMigration
 {
     public long Id => 20210401_001;
     public string Name => "Initial";
     public async Task Up(IArangoMigrator migrator, ArangoHandle handle)
     {
-        await migrator.ApplyStructureAsync(...);
+        await migrator.ApplyStructureAsync(...);	
+	await migrator.Context.Query.ExecuteAsync(...);
     }
 
     public lic Task Down(IArangoMigrator migrator, ArangoHandle handle)
