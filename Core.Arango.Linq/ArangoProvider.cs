@@ -72,7 +72,11 @@ namespace Core.Arango.Linq
             var b = AqlRequest.FromExpression(expression, _collection);
             var (query2, bindVars2) = b.ToAqlQuery();
 
-            var res = _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query2, bindVars2).Result;
+            var c = AqlExpressionConverter.ParseQuery(expression, _collection);
+            var (query3, bindVars3, outputBehaviour) = c.Compile();
+
+
+            var res = _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query3, bindVars3).Result;
             // var resType = res.GetType();
 
             return (TResult) res;

@@ -83,17 +83,21 @@ namespace Core.Arango.Linq.Tests
         /// expected query: FOR x IN Project FILTER POSITION(x.Tags, @searchString) > 0 RETURN x
         /// </summary>
         [Fact]
-        public void TestListContainsElement()
+        public async Task TestListContainsElement()
         {
             var tag = "hello";
-            /*var test = Arango
+            var cs = Arango.Configuration.ConnectionString;
+            var test = Arango
                 .AsQueryable<Project>("test")
-                .Where(x => x.StringList.Any(t => t == tag))
+                .Where(x => x.StringList
+                    .Select(k => k + "hmm")
+                    .Where(t => t.Length > 4)
+                    .Any(t => t == tag + "hmm"))
                 .ToList();
             foreach (var t in test)
             {
                 Assert.Contains(tag, t.StringList);
-            }*/
+            }
         }
 
         /// <summary>
@@ -135,11 +139,11 @@ namespace Core.Arango.Linq.Tests
         public void TestObjectProjection()
         {
             var test = Arango.AsQueryable<Project>("test")
-                .Where(x => x.Name == "A" || x.Name == "B \" RETURN 42")
-                .Select(x => new
+                .Where(z => z.Name == "A" || z.Name == "B \" RETURN 42")
+                .Select(y => new
                 {
-                    Name = x.Name,
-                    Fussbad = x.Value
+                    Name = y.Name,
+                    Fussbad = y.Value
                 })
                 .ToList();
             Assert.True(test.All(x => x.Fussbad > -1));
@@ -256,6 +260,8 @@ namespace Core.Arango.Linq.Tests
         /// <returns></returns>
         public async Task InitializeAsync()
         {
+
+
             await Arango.Database.CreateAsync("test");
             await Arango.Collection.CreateAsync("test", nameof(Project), ArangoCollectionType.Document);
 
@@ -273,7 +279,7 @@ namespace Core.Arango.Linq.Tests
                 Name = "B",
                 Value = 2,
                 StartDate = DateTime.Now.AddDays(-1).ToUniversalTime(),
-                StringList = new List<string>() {"hello2", "you"}
+                StringList = new List<string>() {"hello2", "you", "hello"}
             });
             await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {

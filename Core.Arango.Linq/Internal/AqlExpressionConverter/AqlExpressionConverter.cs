@@ -45,7 +45,7 @@ namespace Core.Arango.Linq.Internal
         public ParameterExpression Parameter { get; set; }
     }
     
-    public class AqlWhere
+    public class AqlFilter
     {
         public AqlConvertable Body { get; set; }
         public ParameterExpression Parameter { get; set; }
@@ -70,178 +70,75 @@ namespace Core.Arango.Linq.Internal
             _expr = expr;
         }
     }
-    
-    public class AqlPrimitive : AqlConvertable
+
+
+    public class AqlQuery
     {
-        private readonly string _value;
+        private readonly AqlCollection _collection;
 
-        public string Value => _value;
-
-        public AqlPrimitive(string value) : base(false)
+        public AqlQuery(AqlCollection collection)
         {
-            _value = value;
+            _collection = collection;
+        }
+
+        public (string, Dictionary<string, object>, AqlQueryOutputBehaviour outputBehaviour) Compile()
+        {
+            var bindVars = new AqlBindVarsPool();
+
+            var param = Expression.Parameter(typeof(object), "x");
+            
+            _collection.SetParameter(param);
+            
+            var paramDict = new Dictionary<string, string>();
+            
+            var compiledQuery = _collection.Convert(paramDict, bindVars);
+
+            return (compiledQuery, bindVars.ToDict(), _collection.OutputBehaviour);
         }
         
-
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            return $"{_value}";
-        }
     }
     
-    public class AqlConstant : AqlConvertable
+    public class AqlExpressionConverter
     {
-        private readonly object _value;
-
-        public object Value => _value;
-
-        public string PreferredName => _preferredName;
-
-        private readonly string _preferredName;
-
-        public AqlConstant(object value, string preferredName) : base(false)
-        {
-            _value = value;
-            _preferredName = preferredName;
-        }
-
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            var label = bindVars.AddNewVar(_value, _preferredName);
-            return $"@{label}";
-        }
-    }
-    
-    public class AqlParameter : AqlConvertable
-    {
-        private readonly ParameterExpression _expr;
-
-        public AqlParameter(ParameterExpression expr) : base(false)
-        {
-            _expr = expr;
-        }
-
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            var paramName = _expr.Name;
-            var o = parameters[paramName];
-            return $"{o}";
-        }
-    }
-    
-    public class AqlMemberAccess : AqlConvertable
-    {
-        private readonly AqlConvertable _left;
-        private readonly string _member;
-
-        public AqlMemberAccess(AqlConvertable left, string member) : base(false)
-        {
-            _left = left;
-            _member = member;
-        }
-
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            var l = _left.Convert(parameters, bindVars);
-            return $"{l}.{_member}";
-        }
-    }
-    
-    public class AqlInList : AqlConvertable
-    {
-        private readonly AqlConvertable _element;
-        private readonly AqlConvertable _container;
-
-        public AqlInList(AqlConvertable element, AqlConvertable container) : base(true)
-        {
-            _element = element;
-            _container = container;
-        }
-
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            var c = _container.Convert(parameters, bindVars,true);
-            var e = _element.Convert(parameters, bindVars, true);
-            return $"{e} IN {c}";
-        }
-    }
-    
-    public class AqlUnary : AqlConvertable
-    {
-
-        public static Dictionary<ExpressionType, string> SupportedExpressionTypeOperators = new Dictionary<ExpressionType, string>()
-        {
-            {ExpressionType.Not, "!"},
-        };
-        
-        private readonly AqlConvertable _inner;
-        private readonly string _operatorStr;
-
-        public AqlUnary(AqlConvertable inner, string operatorStr) : base(true)
-        {
-            _inner = inner;
-            _operatorStr = operatorStr;
-        }
-
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            var i = _inner.Convert(parameters, bindVars, true);
-            return $"{_operatorStr} {i}";
-        }
-    }
-
-    public class AqlBinary : AqlConvertable
-    {
-
-        public static Dictionary<ExpressionType, string> SupportedExpressionTypeOperators = new Dictionary<ExpressionType, string>()
-        {
-            {ExpressionType.And, "&&"},
-            {ExpressionType.AndAlso, "&&"},
-            {ExpressionType.Or, "||"},
-            {ExpressionType.OrElse, "||"},
-            {ExpressionType.Equal, "=="},
-            {ExpressionType.GreaterThan, ">"},
-            {ExpressionType.GreaterThanOrEqual, ">="},
-            {ExpressionType.LessThan, "<"},
-            {ExpressionType.LessThanOrEqual, "<="},
-        };
-        
-        private readonly AqlConvertable _left;
-        private readonly AqlConvertable _right;
-        private readonly string _operatorStr;
-
-        public AqlBinary(AqlConvertable left, AqlConvertable right, string operatorStr) : base(true)
-        {
-            _left = left;
-            _right = right;
-            _operatorStr = operatorStr;
-        }
-
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            var l = _left.Convert(parameters, bindVars,true);
-            var r = _right.Convert(parameters, bindVars, true);
-            return $"{l} {_operatorStr} {r}";
-        }
-    }
-
-    public class AqlInnerExpressionVisitor : ExpressionVisitor
-    {
-        public static AqlConvertable Build(Expression expr)
+        public static AqlConvertable ParseTerm(Expression expr)
         {
             var v = new AqlInnerExpressionVisitor();
             var result = v.Visit(expr);
 
             var c = v.getConvertable();
-            if (c == null)
-            {
-                throw new UnconvertableExpressionException(expr);
-            }
             
             return c;
         }
-        
-        private AqlInnerExpressionVisitor()
+
+        public static AqlQuery ParseQuery(Expression queryExpression, string collection)
+        {
+            var query = new AqlCollection(false);
+            
+            var visitor = new AqlCollectionExpressionParser(query, true);
+            visitor.Parse(queryExpression);
+            query.Collection = new AqlPrimitive(collection);
+
+            return new AqlQuery(query);
+        }
+
+        public static AqlCollection ParseCollection(Expression collectionExpression)
+        {
+            
+            var request = new AqlCollection();
+
+            var visitor = new AqlCollectionExpressionParser(request);
+            visitor.Parse(collectionExpression);
+            
+
+            return request;
+        }
+    }
+
+    
+
+    public class AqlInnerExpressionVisitor : ExpressionVisitor
+    {
+        internal AqlInnerExpressionVisitor()
         {
         }
 
@@ -254,8 +151,8 @@ namespace Core.Arango.Linq.Internal
                 {
                     case "Contains":
                     {
-                        var container = Build(node.Object);
-                        var element = Build(node.Arguments[0]);
+                        var container = AqlExpressionConverter.ParseTerm(node.Object);
+                        var element = AqlExpressionConverter.ParseTerm(node.Arguments[0]);
                         _aqlConvertable = new AqlInList(element, container);
                         return node;
                     }
@@ -267,8 +164,8 @@ namespace Core.Arango.Linq.Internal
                 {
                     case "StartsWith":
                     {
-                        var element = Build(node.Object);
-                        var value = Build(node.Arguments[0]);
+                        var element = AqlExpressionConverter.ParseTerm(node.Object);
+                        var value = AqlExpressionConverter.ParseTerm(node.Arguments[0]);
                         var like = new AqlConcat(value, new AqlConstant(@"%", "percent"), "startsWith");
                         _aqlConvertable = new AqlBinary(element, like, operatorStr: "LIKE");
                         return node;
@@ -281,11 +178,47 @@ namespace Core.Arango.Linq.Internal
                 {
                     case "AddDays":
                     {
-                        var date = Build(node.Object);
-                        var amount = Build(node.Arguments[0]);
+                        var date = AqlExpressionConverter.ParseTerm(node.Object);
+                        var amount = AqlExpressionConverter.ParseTerm(node.Arguments[0]);
                         var unit = new AqlPrimitive(@"""days""");
 
                         _aqlConvertable = new AqlDateAdd(date, amount, unit);
+                        return node;
+                    }
+                }
+            }
+            else if (node.Method.DeclaringType == typeof(System.Linq.Enumerable))
+            {
+                switch (node.Method.Name)
+                {
+                    case "Any":
+                    {
+
+                        var collectionExpression = node.Arguments[0];
+
+                        var hasFilter = node.Arguments.Count > 1;
+                        var predicateExpression = (LambdaExpression) node.Arguments[1];
+                        var parameter = predicateExpression.Parameters[0];
+
+                        var collection = AqlExpressionConverter.ParseCollection(collectionExpression);
+                        collection.SetParameter(parameter);
+
+                        var filterBody = AqlExpressionConverter.ParseTerm(predicateExpression.Body);
+                        var filterBlock = new AqlFilter() {Body = filterBody, Parameter = parameter};
+                        
+                        collection.AddFilterBlock(filterBlock);
+                        
+                        
+                        
+                        var selectBody = new AqlPrimitive("true");
+                        collection.SetSelect(new AqlSimpleSelect() { Body = selectBody, Parameter = parameter});
+
+                        var length = new AqlLength(collection);
+                        var aqlAny = new AqlBinary(length, new AqlPrimitive("0"), ">");
+
+                        _aqlConvertable = aqlAny;
+                        
+                        
                         return node;
                     }
                 }
@@ -326,7 +259,17 @@ namespace Core.Arango.Linq.Internal
             {
                 if (node.Expression != null && node.Expression.NodeType == ExpressionType.Parameter)
                 {
-                    var left = Build(node.Expression);
+                    var left = AqlExpressionConverter.ParseTerm(node.Expression);
+                    if (node.Expression.Type == typeof(string))
+                    {
+                        if (node.Member.Name == "Length")
+                        {
+                            _aqlConvertable = new AqlFunction("CHAR_LENGTH", new [] {left});
+                            return node;
+                        }
+                    }
+                    
+                    
 
                     var memberName = node.Member.Name;
 
@@ -359,7 +302,7 @@ namespace Core.Arango.Linq.Internal
         {
             if (AqlUnary.SupportedExpressionTypeOperators.TryGetValue(node.NodeType, out var operatorStr))
             {
-                var body = Build(node.Operand);
+                var body = AqlExpressionConverter.ParseTerm(node.Operand);
                 _aqlConvertable = new AqlUnary(body, operatorStr);
                 return node;
             }
@@ -369,10 +312,17 @@ namespace Core.Arango.Linq.Internal
 
         protected override Expression VisitBinary(BinaryExpression node)
         {
-            if (AqlBinary.SupportedExpressionTypeOperators.TryGetValue(node.NodeType, out var operatorStr))
+            if (node.NodeType == ExpressionType.Add && node.Type == typeof(string))
             {
-                var left = Build(node.Left);
-                var right = Build(node.Right);
+                var left = AqlExpressionConverter.ParseTerm(node.Left);
+                var right = AqlExpressionConverter.ParseTerm(node.Right);
+                _aqlConvertable = new AqlConcat(left, right, "strAdd");
+                return node;
+            }
+            else if (AqlBinary.SupportedExpressionTypeOperators.TryGetValue(node.NodeType, out var operatorStr))
+            {
+                var left = AqlExpressionConverter.ParseTerm(node.Left);
+                var right = AqlExpressionConverter.ParseTerm(node.Right);
                 _aqlConvertable = new AqlBinary(left, right, operatorStr);
                 return node;
             }
@@ -382,12 +332,14 @@ namespace Core.Arango.Linq.Internal
 
         private AqlConvertable _aqlConvertable;
 
-        AqlConvertable getConvertable()
+        public AqlConvertable getConvertable()
         {
             return this._aqlConvertable;
         }
         
     }
+
+
 
     public class AqlDateAdd : AqlConvertable
     {
@@ -534,10 +486,10 @@ namespace Core.Arango.Linq.Internal
                         var whereLambda = (LambdaExpression) (((UnaryExpression) node.Arguments[1]).Operand);
                         
 
-                        var body = AqlInnerExpressionVisitor.Build(whereLambda.Body);
+                        var body = AqlExpressionConverter.ParseTerm(whereLambda.Body);
                         var parameter = whereLambda.Parameters[0];
                     
-                        var whereBlock = new AqlWhere() {Body = body, Parameter = parameter};
+                        var whereBlock = new AqlFilter() {Body = body, Parameter = parameter};
                     
                         _request.AddFilterBlock(whereBlock);
                     
@@ -571,7 +523,7 @@ namespace Core.Arango.Linq.Internal
                             for (var i = 0; i < expr.Members.Count; i++)
                             {
                                 var member = expr.Members[i].Name;
-                                var value = AqlInnerExpressionVisitor.Build(expr.Arguments[i]);
+                                var value = AqlExpressionConverter.ParseTerm(expr.Arguments[i]);
                                 proj.AddMember(member, value);
                             }
 
@@ -589,7 +541,7 @@ namespace Core.Arango.Linq.Internal
                                 {
                                     var assignment = (MemberAssignment) binding;
                                     var member = assignment.Member.Name;
-                                    var value = AqlInnerExpressionVisitor.Build(assignment.Expression);
+                                    var value = AqlExpressionConverter.ParseTerm(assignment.Expression);
 
                                     proj.AddMember(member, value);
 
@@ -608,7 +560,7 @@ namespace Core.Arango.Linq.Internal
                         }
                         else
                         {
-                            body = AqlInnerExpressionVisitor.Build(selectLambda.Body);
+                            body = AqlExpressionConverter.ParseTerm(selectLambda.Body);
                         }
                         
                         var aqlSelect = new AqlSimpleSelect() { Body = body, Parameter = parameter};
@@ -638,7 +590,7 @@ namespace Core.Arango.Linq.Internal
                     {
                         
                         var orderByLambda = (LambdaExpression) (((UnaryExpression) node.Arguments[1]).Operand);
-                        var body = AqlInnerExpressionVisitor.Build(orderByLambda.Body);
+                        var body = AqlExpressionConverter.ParseTerm(orderByLambda.Body);
                         var parameter = orderByLambda.Parameters[0];
                         
                         var aqlSort = new AqlSort() { Body = body, Parameter = parameter};
@@ -700,12 +652,13 @@ namespace Core.Arango.Linq.Internal
         private AqlSort _sortBlock = null;
 
 
-        public List<AqlWhere> filterBlocks { get; set; } = new List<AqlWhere>();
+        public List<AqlFilter> filterBlocks { get; set; } = new List<AqlFilter>();
         
         private AqlRequest()
         {
         }
 
+        [Obsolete("No longer maintained or updated. Use AqlExpressionConverter.ParseQuery instead.")]
         public static AqlRequest FromExpression(Expression expr, string collection)
         {
             var request = new AqlRequest();
@@ -783,9 +736,9 @@ namespace Core.Arango.Linq.Internal
             return (sb.ToString(), bindVars.ToDict());
         }
 
-        public void AddFilterBlock(AqlWhere whereBlock)
+        public void AddFilterBlock(AqlFilter filterBlock)
         {
-            this.filterBlocks.Add(whereBlock);
+            this.filterBlocks.Add(filterBlock);
         }
 
         public void SetSelect(AqlSimpleSelect selectBlock)
