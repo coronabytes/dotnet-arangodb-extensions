@@ -68,9 +68,6 @@ namespace Core.Arango.Linq
 
             var query = writer.ToString();
             var bindVars = writer.BindVars;
-            
-            var b = AqlRequest.FromExpression(expression, _collection);
-            var (query2, bindVars2) = b.ToAqlQuery();
 
             var c = AqlExpressionConverter.ParseQuery(expression, _collection);
             var (query3, bindVars3, outputBehaviour) = c.Compile();
