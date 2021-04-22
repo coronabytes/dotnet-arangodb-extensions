@@ -10,6 +10,16 @@ namespace Core.Arango.Linq.Tests
             new ArangoContext($"Server=http://localhost:8529;Realm=CI-{Guid.NewGuid():D};User=root;Password=;");
 
         [Fact]
+        public void AqlFunction()
+        {
+            var (aql, bindVars) = Arango.AsQueryable<Project>("test")
+              .Select(y => Aql.Trim(y.Name))
+                .ToAql();
+
+            Assert.Equal("FOR x IN Project\r\nRETURN TRIM(x.Name)", aql.Trim());
+        }
+
+        [Fact]
         public void WhereSortSelectProp()
         {
             var (aql, bindVars) = Arango.AsQueryable<Project>("test")

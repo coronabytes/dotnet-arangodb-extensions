@@ -275,9 +275,17 @@ namespace Core.Arango.Linq.Internal
 
                 return expr;
             }
-            
-            
-            if (node.Method.DeclaringType.IsGenericType && node.Method.DeclaringType.GetGenericTypeDefinition() == typeof(List<>))
+
+
+            var aqlFunction = node.Method.GetCustomAttribute<AqlFunctionAttribute>();
+
+            if (aqlFunction != null)
+            {
+                var args = node.Arguments.Select(x => AqlExpressionConverter.ParseTerm(x, _context));
+                _aqlConvertable = new AqlFunction(aqlFunction.Name, args.ToArray());
+                return node;
+            }
+            else if (node.Method.DeclaringType.IsGenericType && node.Method.DeclaringType.GetGenericTypeDefinition() == typeof(List<>))
             {
                 switch (node.Method.Name)
                 {
