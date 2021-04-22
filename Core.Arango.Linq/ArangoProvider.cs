@@ -8,7 +8,12 @@ using Core.Arango.Linq.Internal;
 
 namespace Core.Arango.Linq
 {
-    public class ArangoProvider : IQueryProvider
+    public interface IArangoQueryProvider
+    {
+        public string Collection { get; }
+    }
+
+    public class ArangoProvider : IQueryProvider, IArangoQueryProvider
     {
         private readonly IArangoContext _arango;
         private readonly string _collection;
@@ -59,7 +64,7 @@ namespace Core.Arango.Linq
 
             var elementType = TypeSystem.GetElementType(expression.Type);
 
-            var writer = new AqlCodeWriter(expression)
+            /*var writer = new AqlCodeWriter(expression)
             {
                 Collection = _collection
             };
@@ -67,7 +72,7 @@ namespace Core.Arango.Linq
             
 
             var query = writer.ToString();
-            var bindVars = writer.BindVars;
+            var bindVars = writer.BindVars;*/
 
             var c = AqlExpressionConverter.ParseQuery(expression, _collection);
             var (query3, bindVars3, outputBehaviour) = c.Compile();
@@ -85,15 +90,18 @@ namespace Core.Arango.Linq
 
             var elementType = TypeSystem.GetElementType(expression.Type);
 
-            var writer = new AqlCodeWriter(expression)
+            /*var writer = new AqlCodeWriter(expression)
             {
                 Collection = _collection
             };
 
             var query = writer.ToString();
-            var bindVars = writer.BindVars;
+            var bindVars = writer.BindVars;*/
 
-            var res = await _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query, bindVars,
+            var c = AqlExpressionConverter.ParseQuery(expression, _collection);
+            var (query3, bindVars3, outputBehaviour) = c.Compile();
+
+            var res = await _arango.Query.ExecuteAsync(elementType, isEnumerable, _handle, query3, bindVars3,
                 cancellationToken: cancel); //geändert: isEnumerable anstatt true
 
             var list = res as List<TResult>;
@@ -107,5 +115,7 @@ namespace Core.Arango.Linq
             /*await _arango.QueryAsync(elementType, true, _handle, query, bindVars,
                 cancellationToken: cancel);*/
         }
+
+        public string Collection => _collection;
     }
 }

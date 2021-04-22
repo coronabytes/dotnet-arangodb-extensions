@@ -32,5 +32,13 @@ namespace Core.Arango.Linq
 
             throw new InvalidOperationException();
         }
+
+        public static (string aql, IDictionary<string, object> bindVars) ToAql<TSource>([NotNull] this IQueryable<TSource> source)
+        {
+            if (source is IArangoQueryableContext aqc)
+                return aqc.Compile();
+
+            return default;
+        }
     }
 }
