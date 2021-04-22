@@ -7,10 +7,21 @@ using System.Threading;
 
 namespace Core.Arango.Linq
 {
-    public class ArangoQueryableContext<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>
+
+    public interface IArangoQueryableContext
     {
+        string Collection { get; }
+        Expression Expression { get; }
+        IQueryProvider Provider { get; }
+    }
+    
+    public class ArangoQueryableContext<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>, IArangoQueryableContext
+    {
+        public string Collection { get; }
+
         public ArangoQueryableContext(IArangoContext arango, ArangoHandle handle, string collection)
         {
+            Collection = collection;
             Provider = new ArangoProvider(arango, handle, collection);
             Expression = Expression.Constant(this);
         }

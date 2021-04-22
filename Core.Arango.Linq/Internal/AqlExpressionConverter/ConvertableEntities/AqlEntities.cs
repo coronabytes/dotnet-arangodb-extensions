@@ -24,6 +24,21 @@ namespace Core.Arango.Linq.Internal
             return $"{_value}";
         }
     }
+
+    public class AqlVariable : AqlConvertable
+    {
+        private readonly AqlQueryVariable _variable;
+
+        public AqlVariable(AqlQueryVariable variable) : base(false)
+        {
+            _variable = variable;
+        }
+
+        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
+        {
+            return $"{this._variable.Name}";
+        }
+    }
     
     public class AqlConstant : AqlConvertable
     {

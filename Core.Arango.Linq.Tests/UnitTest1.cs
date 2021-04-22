@@ -1,17 +1,69 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using Core.Arango.Protocol;
 using Xunit;
 
 namespace Core.Arango.Linq.Tests
 {
+
+    public class ArLinCompound<TBase, TDec> : IQueryable<TBase>
+    {
+        public TDec Declaration { get; set; }
+        
+        
+        public IEnumerator<TBase> GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public Type ElementType { get; }
+        public Expression Expression { get; }
+        public IQueryProvider Provider { get; }
+    }
+    
+    public static class ArLinkExt
+    {
+        
+        
+        public static IQueryable<TKey> DeclareLet<TSource, TKey>(this IQueryable<TSource> source, Expression<Func<TSource, TKey>> keySelector) {
+            throw new NotImplementedException();
+        }
+    }
+    
+    public class EntityWithVariable<T>
+    {
+        public T Entity { get; set; }
+        
+        
+    }
+
+    public class Client
+    {
+        public Guid Key { get; set; }
+        public string Name { get; set; }
+    }
+    
+    
     public class Project
     {
         public Guid Key { get; set; }
         public string Name { get; set; }
         public int Value { get; set; }
+        
+        
+        public Guid ClientKey { get; set; }
+        public Client Client { get; set; }
 
         public DateTime StartDate { get; set; }
         
@@ -20,6 +72,7 @@ namespace Core.Arango.Linq.Tests
 
     public class UnitTest1 : IAsyncLifetime
     {
+        
         protected readonly IArangoContext Arango =
             new ArangoContext($"Server=http://localhost:8529;Realm=CI-{Guid.NewGuid():D};User=root;Password=;");
 
@@ -47,7 +100,7 @@ namespace Core.Arango.Linq.Tests
         [Fact]
         public void TestWhereSelect()
         {
-            var test = Arango.AsQueryable<Project>("test").Where(x => x.Name == "A").Select(x => x.Name).ToList();
+            var test = Arango.AsQueryable<Project>("test").Where(z => z.Name == "A").Select(y => y.Name).ToList();
             foreach (var t in test)
             {
                 Assert.True(t == "A");
@@ -106,7 +159,9 @@ namespace Core.Arango.Linq.Tests
         [Fact]
         public void TestOr()
         {
-            var test = Arango.AsQueryable<Project>("test").Where(x => x.Value == 1 || x.Value == 2).ToList();
+            var test = Arango.AsQueryable<Project>("test")
+                .Where(x => x.Value == 1 || x.Value == 2)
+                .ToList();
             foreach (var t in test)
             {
                 Assert.True(t.Value == 1 || t.Value == 2);
@@ -125,6 +180,21 @@ namespace Core.Arango.Linq.Tests
                 Assert.StartsWith("A", t.Name);
                 Assert.True(test.Count > 0);
             }
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        [Fact]
+        public void TestAqlFunc()
+        {
+            /*var test = Arango.AsQueryable<Project>("test")
+                .Select(x => Aql.DATE_ADD(x.StartDate, 10, "years"))
+                .ToList();
+            foreach (var t in test)
+            {
+                Assert.True(test.Count > 0);
+            }*/
         }
 
         class ProjectProj
@@ -238,6 +308,27 @@ namespace Core.Arango.Linq.Tests
                 Assert.True(t <= DateTime.UtcNow);
             }
         }
+        
+        [Fact]
+        public void TestDelcareLet()
+        {
+            var clientKeys = Arango
+                .AsQueryable<Client>("test", "Client")
+                .Where(x => x.Name.Length > 0)
+                .Select(x => x.Key);
+            
+            
+            var test3 = Arango
+                .AsQueryable<Project>("test")
+                .Where(x => clientKeys.Any(k => k == x.ClientKey))
+                .Select(x => new {name = "kaspar"})
+                .ToList();
+
+            Assert.True(test3.Any());
+
+        }
+        
+        
 
         // todo
         [Fact]
@@ -264,14 +355,24 @@ namespace Core.Arango.Linq.Tests
 
             await Arango.Database.CreateAsync("test");
             await Arango.Collection.CreateAsync("test", nameof(Project), ArangoCollectionType.Document);
+            await Arango.Collection.CreateAsync("test", nameof(Client), ArangoCollectionType.Document);
 
+            var cg1 = Guid.NewGuid();
+            
+            await Arango.Document.CreateAsync("test", nameof(Client), new Client
+            {
+                Key = cg1,
+                Name = "Client Peter"
+            });
+            
             await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
                 Key = Guid.NewGuid(),
                 Name = "A",
                 Value = 1,
                 StartDate = new DateTime(2020, 04, 03).ToUniversalTime(),
-                StringList = new List<string>() {"hello", "you"}
+                StringList = new List<string>() {"hello", "you"},
+                ClientKey = cg1
             });
             await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {
@@ -279,7 +380,8 @@ namespace Core.Arango.Linq.Tests
                 Name = "B",
                 Value = 2,
                 StartDate = DateTime.Now.AddDays(-1).ToUniversalTime(),
-                StringList = new List<string>() {"hello2", "you", "hello"}
+                StringList = new List<string>() {"hello2", "you", "hello"},
+                ClientKey = cg1
             });
             await Arango.Document.CreateAsync("test", nameof(Project), new Project
             {

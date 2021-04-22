@@ -12,14 +12,16 @@ namespace Core.Arango.Linq.Internal
     public class AqlCollectionExpressionParser
     {
         private readonly AqlCollection _collection;
+        private readonly AqlParseQueryContext _context;
         private readonly bool _useFirstSelectAsReturn;
         private bool _useNextSelectAsReturn;
         
         private bool alreadyParsed = false;
 
-        public AqlCollectionExpressionParser(AqlCollection collection, bool useFirstSelectAsReturn = false)
+        public AqlCollectionExpressionParser(AqlCollection collection, AqlParseQueryContext context, bool useFirstSelectAsReturn = false)
         {
             _collection = collection;
+            _context = context;
             _useFirstSelectAsReturn = useFirstSelectAsReturn;
         }
 
@@ -42,7 +44,7 @@ namespace Core.Arango.Linq.Internal
                 return ParseMethod((MethodCallExpression) node);
             }
 
-            return AqlExpressionConverter.ParseTerm(node);
+            return AqlExpressionConverter.ParseTerm(node, _context);
         }
 
         private  AqlConvertable ParseMethod(MethodCallExpression node)
@@ -80,7 +82,7 @@ namespace Core.Arango.Linq.Internal
                     {
                         var whereLambda = (LambdaExpression) (UnquoteExpression(node.Arguments[1]));
 
-                        var body = AqlExpressionConverter.ParseTerm(whereLambda.Body);
+                        var body = AqlExpressionConverter.ParseTerm(whereLambda.Body, _context);
                         var parameter = whereLambda.Parameters[0];
                     
                         var whereBlock = new AqlFilter() {Body = body, Parameter = parameter};
@@ -104,7 +106,7 @@ namespace Core.Arango.Linq.Internal
                                 for (var i = 0; i < expr.Members.Count; i++)
                                 {
                                     var member = expr.Members[i].Name;
-                                    var value = AqlExpressionConverter.ParseTerm(expr.Arguments[i]);
+                                    var value = AqlExpressionConverter.ParseTerm(expr.Arguments[i], _context);
                                     proj.AddMember(member, value);
                                 }
 
@@ -122,7 +124,7 @@ namespace Core.Arango.Linq.Internal
                                     {
                                         var assignment = (MemberAssignment) binding;
                                         var member = assignment.Member.Name;
-                                        var value = AqlExpressionConverter.ParseTerm(assignment.Expression);
+                                        var value = AqlExpressionConverter.ParseTerm(assignment.Expression, _context);
 
                                         proj.AddMember(member, value);
 
@@ -141,7 +143,7 @@ namespace Core.Arango.Linq.Internal
                             }
                             else
                             {
-                                body = AqlExpressionConverter.ParseTerm(selectLambda.Body);
+                                body = AqlExpressionConverter.ParseTerm(selectLambda.Body, _context);
                             }
                             #endregion
 
@@ -165,7 +167,7 @@ namespace Core.Arango.Linq.Internal
                         else
                         {
                             var inner = node.Arguments[0];
-                            var selectCollection = AqlExpressionConverter.ParseCollection(inner);
+                            var selectCollection = AqlExpressionConverter.ParseCollection(inner, _context);
                             var lambda = (LambdaExpression) (UnquoteExpression(node.Arguments[1]));
                             var parameter = lambda.Parameters[0];
                             selectCollection.SetParameter(parameter);
@@ -193,7 +195,7 @@ namespace Core.Arango.Linq.Internal
                     {
                         
                         var orderByLambda = (LambdaExpression) (((UnaryExpression) node.Arguments[1]).Operand);
-                        var body = AqlExpressionConverter.ParseTerm(orderByLambda.Body);
+                        var body = AqlExpressionConverter.ParseTerm(orderByLambda.Body, _context);
                         var parameter = orderByLambda.Parameters[0];
                         
                         var aqlSort = new AqlSort() { Body = body, Parameter = parameter};
@@ -207,7 +209,7 @@ namespace Core.Arango.Linq.Internal
                 }
             }
             
-            return AqlExpressionConverter.ParseTerm(node);
+            return AqlExpressionConverter.ParseTerm(node, _context);
         }
     }
     
