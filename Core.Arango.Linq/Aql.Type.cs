@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Core.Arango.Linq
 {
+    [SuppressMessage("CodeQuality", "IDE0060")]
     public static partial class Aql
     {
         [AqlFunction("TO_BOOL")]

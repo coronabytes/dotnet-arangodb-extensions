@@ -345,6 +345,12 @@ namespace Core.Arango.Linq.Tests
         //    var test = await Arango.AsQueryable<Project>("test").Single
         //}
 
+        [Fact]
+        public async Task FindAsyncPredicate()
+        {
+            var test = await Arango.Query.FindAsync<Project>("test", x => x.Name == "A");
+        }
+
         /// <summary>
         /// Initialisiert eine Datenbank und eine Collection für die Tests
         /// </summary>
