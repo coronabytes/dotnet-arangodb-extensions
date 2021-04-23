@@ -58,6 +58,81 @@ namespace Core.Arango.Linq
         {
             return await c.AsQueryable<T>(h).Where(predicate).ToListAsync();
         }
+        
+        #region First
+
+        public static Task<TSource> FirstAsync<TSource>(this IQueryable<TSource> source)
+        {
+            return FirstOrDefaultAsync(source, false, null);
+        }
+
+        public static Task<TSource> FirstAsync<TSource>(this IQueryable<TSource> source, Expression<Func<TSource, bool>> predicate)
+        {
+            return FirstOrDefaultAsync(source, false, predicate);
+        }
+
+        public static Task<TSource> FirstOrDefaultAsync<TSource>(this IQueryable<TSource> source)
+        {
+            return FirstOrDefaultAsync(source, true, null);
+        }
+
+        public static Task<TSource> FirstOrDefaultAsync<TSource>(this IQueryable<TSource> source, Expression<Func<TSource, bool>> predicate)
+        {
+            return FirstOrDefaultAsync(source, true, predicate);
+        }
+
+        private static async Task<T> FirstOrDefaultAsync<T>(this IQueryable<T> source, bool returnDefaultWhenEmpty, Expression<Func<T, bool>> predicate)
+        {
+            if (predicate != null)
+                source = source.Where(predicate);
+            var list = await source.Take(1).ToListAsync().ConfigureAwait(false);
+            
+            if (returnDefaultWhenEmpty)
+                return list.FirstOrDefault();
+
+            return list.First();
+        }
+
+        #endregion
+
+        #region Single
+
+        public static Task<TSource> SingleAsync<TSource>(this IQueryable<TSource> source)
+        {
+            return SingleOrDefaultAsync(source, false, null);
+        }
+
+        public static Task<TSource> SingleAsync<TSource>(this IQueryable<TSource> source, Expression<Func<TSource, bool>> predicate)
+        {
+            return SingleOrDefaultAsync(source, false, predicate);
+        }
+
+        public static Task<TSource> SingleOrDefaultAsync<TSource>(this IQueryable<TSource> source)
+        {
+            return SingleOrDefaultAsync(source, true, null);
+        }
+
+        public static Task<TSource> SingleOrDefaultAsync<TSource>(this IQueryable<TSource> source, Expression<Func<TSource, bool>> predicate)
+        {
+            return SingleOrDefaultAsync(source, true, predicate);
+        }
+
+        private static async Task<T> SingleOrDefaultAsync<T>(this IQueryable<T> source, bool returnDefaultWhenEmpty, Expression<Func<T, bool>> predicate)
+        {
+            if (predicate != null)
+                source = source.Where(predicate);
+
+            var list = await source.Take(2).ToListAsync().ConfigureAwait(false);
+
+            if (returnDefaultWhenEmpty)
+                return list.SingleOrDefault();
+
+            return list.Single();
+        }
+
+        #endregion
+
+        #region Mutation
 
         public static IQueryable<TSource> Update<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
         {
@@ -78,5 +153,7 @@ namespace Core.Arango.Linq
         {
             return source;
         }
+
+        #endregion
     }
 }
