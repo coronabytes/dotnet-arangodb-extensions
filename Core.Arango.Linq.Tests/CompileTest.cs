@@ -20,6 +20,16 @@ namespace Core.Arango.Linq.Tests
         }
 
         [Fact]
+        public void Distinct()
+        {
+            var (aql, bindVars) = Arango.AsQueryable<Project>("test")
+                .Distinct()
+                .ToAql();
+
+            Assert.Equal("FOR x IN Project\r\nRETURN DISTINCT x", aql.Trim());
+        }
+
+        [Fact]
         public void WhereSortSelectProp()
         {
             var (aql, bindVars) = Arango.AsQueryable<Project>("test")
