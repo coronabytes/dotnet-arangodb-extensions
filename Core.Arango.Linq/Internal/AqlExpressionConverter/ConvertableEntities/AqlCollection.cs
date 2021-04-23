@@ -34,6 +34,8 @@ namespace Core.Arango.Linq.Internal
             this._useNextSelectAsReturn = _useFirstSelectAsReturn;
             var inner = ParseLayer(collectionExpression);
             _collection.Collection = inner;
+            _context.ConsumeBuildStack(_collection);
+            
             alreadyParsed = true;
         }
 
@@ -86,7 +88,86 @@ namespace Core.Arango.Linq.Internal
                         var parameter = whereLambda.Parameters[0];
                     
                         var whereBlock = new AqlFilter() {Body = body, Parameter = parameter};
-                        _collection.AddFilterBlock(whereBlock);
+                        _context.AddElementToBuildStack(whereBlock);
+                        // _collection.AddFilterBlock(whereBlock);
+                        
+                        var inner = node.Arguments[0];
+                        return ParseLayer(inner);
+                    }
+                    case "GroupBy":
+                    {
+                        
+                        AqlGroupingKeyProjection GetGroupingKeyProjection(LambdaExpression keyLambda)
+                        {
+                            AqlGroupingKeyProjection body;
+                            #region get body
+                            if (keyLambda.Body.NodeType == ExpressionType.New)
+                            {
+                                var expr = (NewExpression) keyLambda.Body;
+                                var param = keyLambda.Parameters[0];
+
+                                var proj = new AqlGroupingKeyProjection(param.Name);
+
+                                for (var i = 0; i < expr.Members.Count; i++)
+                                {
+                                    var member = expr.Members[i].Name;
+                                    var value = AqlExpressionConverter.ParseTerm(expr.Arguments[i], _context);
+                                    var memberVar = _context.MakeNewVariable(member);
+                                    proj.AddMember(member, value, memberVar);
+                                }
+
+                                body = proj;
+                            }
+                            else if (keyLambda.Body.NodeType == ExpressionType.MemberInit)
+                            {
+                                var init = (MemberInitExpression) keyLambda.Body;
+                                
+                                var param = keyLambda.Parameters[0];
+                                var proj = new AqlGroupingKeyProjection(param.Name);
+
+                                foreach (var binding in init.Bindings)
+                                {
+                                    if (binding.BindingType == MemberBindingType.Assignment)
+                                    {
+                                        var assignment = (MemberAssignment) binding;
+                                        var member = assignment.Member.Name;
+                                        var value = AqlExpressionConverter.ParseTerm(assignment.Expression, _context);
+
+                                        proj.AddMember(member, value);
+
+                                    } else
+                                    {
+                                        throw new UnhandledExpressionException(init); 
+                                    }
+                                    
+
+                                    // proj.AddBinding(binding.i);
+                                }
+                                
+                                
+
+                                body = proj;
+                            }
+                            else
+                            {
+                                body = null;
+                            }
+                            #endregion
+
+                            return body;
+                        }
+                        
+                        var test = "hallo";
+
+                        var keyProjection = (LambdaExpression) UnquoteExpression(node.Arguments[1]);
+
+                        var groupKeys = GetGroupingKeyProjection( keyProjection);
+
+                        var test2 = "test2";
+                        
+                        var grouping = new AqlGrouping(groupKeys);
+                        _context.ConsumeBuildStack(grouping);
+                        _context.AddElementToBuildStack(grouping);
                         
                         var inner = node.Arguments[0];
                         return ParseLayer(inner);
@@ -160,7 +241,9 @@ namespace Core.Arango.Linq.Internal
 
                             var body = GetSelectBody(selectLambda);
 
-                            _collection.SetSelect(new AqlSimpleSelect(){ Body = body, Parameter = parameter });
+                            var select = new AqlSimpleSelect() {Body = body, Parameter = parameter};
+                            
+                            _context.AddElementToBuildStack(select);
 
                             return ParseLayer(inner);
                         }
@@ -213,13 +296,14 @@ namespace Core.Arango.Linq.Internal
         }
     }
     
-    public class AqlCollection : AqlConvertable
+    public class AqlCollection : AqlConvertable, BuildStackConsumer
     {
         private readonly bool _withBrackets;
         private AqlSimpleSelect _selectBlock = null;
         private int? _limit;
         private AqlSort _sortBlock = null;
         private ParameterExpression _parameter;
+        private AqlGrouping _grouping = null;
 
 
         /// <summary>
@@ -295,7 +379,13 @@ namespace Core.Arango.Linq.Internal
                 sb.AppendLine($"SORT {sortString}");
             }
 
-            if (_selectBlock != null)
+            if (_grouping != null)
+            {
+                _grouping.SetParameter(projectionVarLabel);
+                var groupingStr = _grouping.Convert(parameters, bindVars);
+                sb.AppendLine($"{groupingStr}");
+            }
+            else if (_selectBlock != null)
             {
                 var selectString = _selectBlock.Body.Convert(
                     BaseParamsWith(_selectBlock.Parameter.Name, projectionVarLabel),
@@ -338,7 +428,26 @@ namespace Core.Arango.Linq.Internal
         {
             this._sortBlock = aqlSort;
         }
-        
+
+        public void ConsumeFilter(AqlFilter filter)
+        {
+            AddFilterBlock(filter);
+        }
+
+        public void ConsumeSelect(AqlSimpleSelect aqlSimpleSelect)
+        {
+            SetSelect(aqlSimpleSelect);
+        }
+
+        public void ConsumeGrouping(AqlGrouping aqlGrouping)
+        {
+            SetGrouping(aqlGrouping);
+        }
+
+        private void SetGrouping(AqlGrouping aqlGrouping)
+        {
+            this._grouping = aqlGrouping;
+        }
     }
 
     public enum AqlQueryOutputBehaviour

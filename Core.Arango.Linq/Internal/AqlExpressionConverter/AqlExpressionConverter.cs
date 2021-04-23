@@ -33,10 +33,14 @@ namespace Core.Arango.Linq.Internal
         public abstract string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars);
     }
 
-    public class AqlSimpleSelect
+    public class AqlSimpleSelect : AqlParseQueryContextBuildStackElement
     {
         public AqlConvertable Body { get; set; }
         public ParameterExpression Parameter { get; set; }
+        public void FeedToConsumer(BuildStackConsumer consumer)
+        {
+            consumer.ConsumeSelect(this);
+        }
     }
     
     public class AqlSort
@@ -45,10 +49,14 @@ namespace Core.Arango.Linq.Internal
         public ParameterExpression Parameter { get; set; }
     }
     
-    public class AqlFilter
+    public class AqlFilter : AqlParseQueryContextBuildStackElement
     {
         public AqlConvertable Body { get; set; }
         public ParameterExpression Parameter { get; set; }
+        public void FeedToConsumer(BuildStackConsumer consumer)
+        {
+            consumer.ConsumeFilter(this);
+        }
     }
 
     public class UnconvertableExpressionException : Exception
@@ -121,6 +129,18 @@ namespace Core.Arango.Linq.Internal
     {
         public string Name { get; set; } 
     }
+
+    public interface AqlParseQueryContextBuildStackElement
+    {
+        public void FeedToConsumer(BuildStackConsumer consumer);
+    }
+
+    public interface BuildStackConsumer
+    {
+        void ConsumeFilter(AqlFilter filter);
+        void ConsumeSelect(AqlSimpleSelect aqlSimpleSelect);
+        void ConsumeGrouping(AqlGrouping aqlGrouping);
+    }
     
     public class AqlParseQueryContext
     {
@@ -129,8 +149,24 @@ namespace Core.Arango.Linq.Internal
         
         private Dictionary<string, AqlQueryVariable> _variables = new Dictionary<string, AqlQueryVariable>();
 
-        
+
         private Regex rgx = new Regex("[^a-zA-Z0-9_]", RegexOptions.Compiled);
+        
+        private LinkedList<AqlParseQueryContextBuildStackElement> _buildStackElements = new LinkedList<AqlParseQueryContextBuildStackElement>();
+
+        public void AddElementToBuildStack(AqlParseQueryContextBuildStackElement element)
+        {
+            _buildStackElements.AddFirst(element);
+        }
+
+        public void ConsumeBuildStack(BuildStackConsumer consumer)
+        {
+            foreach (var element in _buildStackElements)
+            {
+                element.FeedToConsumer(consumer);
+            }
+            _buildStackElements.Clear();
+        }
         
         private string GetLegalVariableName(string name)
         {
@@ -248,7 +284,7 @@ namespace Core.Arango.Linq.Internal
             
             var request = new AqlCollection();
 
-            var visitor = new AqlCollectionExpressionParser(request, context);
+            var visitor = new AqlCollectionExpressionParser(request, context, true);
             visitor.Parse(collectionExpression);
             
 
@@ -340,6 +376,11 @@ namespace Core.Arango.Linq.Internal
             {
                 switch (node.Method.Name)
                 {
+                    case "ToList":
+                    {
+                        var inner = node.Arguments[0];
+                        return this.Visit(inner);
+                    }
                     case "Any":
                     {
 
@@ -496,12 +537,21 @@ namespace Core.Arango.Linq.Internal
 
                     return node;
                 }
-                else
+                else if (node.Expression == null || node.Expression.NodeType == ExpressionType.Constant)
                 {
                     Expression<Func<object>> le = Expression.Lambda<Func<object>>(Expression.Convert(node, typeof(object)));
                     var compiledExpression = le.Compile();
                     var value = compiledExpression();
                     _aqlConvertable = new AqlConstant(value, node.Member.Name);
+                    return node;
+                }
+                else
+                {
+                    var left = AqlExpressionConverter.ParseTerm(node.Expression, _context);
+                    
+                    var memberName = node.Member.Name;
+                    
+                    _aqlConvertable = new AqlMemberAccess(left, memberName);
                     return node;
                 }
                 

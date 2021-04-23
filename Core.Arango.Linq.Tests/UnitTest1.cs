@@ -344,14 +344,14 @@ namespace Core.Arango.Linq.Tests
 
             var test3 = Arango
                 .AsQueryable<Project>("test")
-                .Where(x => x.Name.Length > 2)
-                .GroupBy(x => new {x.ClientKey, x.ProjectType})
+                .Where(x => x.Name.Length < 3)
+                .GroupBy(x => new {key = x.ClientKey, x.ProjectType})
                 .Select(g => new
                 {
-                    ClientKey = g.Key.ClientKey,
-                    ProjectType = g.Key.ProjectType,
-                    Count = g.Count(),
-                    Projects = g.Select(x => x.Name).ToList()
+                    ClientKey = g.Key.key,
+                    // ClientKey = g.Key.ClientKey,
+                    // ProjectType = g.Key.ProjectType,
+                    Gropps = g.ToList()
                 })
                 .ToList();
 
