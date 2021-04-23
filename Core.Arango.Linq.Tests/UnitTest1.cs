@@ -348,7 +348,10 @@ namespace Core.Arango.Linq.Tests
         [Fact]
         public async Task FindAsyncPredicate()
         {
-            var test = await Arango.Query.FindAsync<Project>("test", x => x.Name == "A");
+            var test = await Arango.FindAsync<Project>("test", x => x.Name == "A");
+
+            Assert.Single(test);
+            Assert.Equal("A", test.Single().Name);
         }
 
         /// <summary>

@@ -54,12 +54,9 @@ namespace Core.Arango.Linq
             return default;
         }
 
-        public static async Task<List<T>> FindAsync<T>(this IArangoQueryModule m, ArangoHandle h, Expression<Func<T, bool>> predicate)
+        public static async Task<List<T>> FindAsync<T>(this IArangoContext c, ArangoHandle h, Expression<Func<T, bool>> predicate)
         {
-            // TODO: Parse predicate?
-            var c = AqlExpressionConverter.ParseQuery(predicate, typeof(T).Name);
-            var (aql, bindVars, _) = c.Compile();
-            return await m.ExecuteAsync<T>(h, aql, bindVars);
+            return await c.AsQueryable<T>(h).Where(predicate).ToListAsync();
         }
 
         public static IQueryable<TSource> Update<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
