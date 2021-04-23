@@ -13,6 +13,9 @@ namespace Core.Arango.Linq
         public static IQueryable<T> AsScopeVariable<T>(this IArangoContext arango, string collection = null)
         {
             // TODO: replace with saver dummy
+            
+            // The base expression needs to be a constant of IArangoQueryableCollection. Its Collection property will be read by the parser.
+            // It needs to support expression chaining but not enumeration. 
             return new ArangoQueryableContext<T>(null, null, collection ?? typeof(T).Name);
         }
         
