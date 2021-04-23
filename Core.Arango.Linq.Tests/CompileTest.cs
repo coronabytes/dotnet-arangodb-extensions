@@ -20,6 +20,21 @@ namespace Core.Arango.Linq.Tests
         }
 
         [Fact]
+        public void Mutation()
+        {
+            var (aql, bindVars) = Arango.AsQueryable<Project>("test")
+                .Update(x => new
+                {
+                    x.Key,
+                    Name = x.Name + "2"
+                }, nameof(Project))
+                .Remove(x=> x.Key, "Queue")
+                .ToAql();
+
+            Assert.Equal("FOR x IN Project\r\nUPDATE { _key: x._key, Name: CONCAT(x.Name, @c} IN Project\r\nREMOVE x._key IN Queue", aql.Trim());
+        }
+
+        [Fact]
         public void Distinct()
         {
             var (aql, bindVars) = Arango.AsQueryable<Project>("test")
@@ -27,6 +42,19 @@ namespace Core.Arango.Linq.Tests
                 .ToAql();
 
             Assert.Equal("FOR x IN Project\r\nRETURN DISTINCT x", aql.Trim());
+        }
+
+        [Fact]
+        public void MultiFilter()
+        {
+            var (aql, bindVars) = Arango.AsQueryable<Project>("test")
+                .Where(z => z.Name == "A")
+                .OrderBy(x => x.Name)
+                .Where(z => z.Name == "B")
+                .Select(y => y.Name)
+                .ToAql();
+
+            Assert.Equal("FOR x IN Project\r\nFILTER x.Name == @c\r\nSORT x.Name\r\nFILTER x.Name == @c0\r\nRETURN x.Name\r\n\r\n", aql);
         }
 
         [Fact]

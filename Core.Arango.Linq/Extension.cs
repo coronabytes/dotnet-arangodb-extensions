@@ -61,5 +61,25 @@ namespace Core.Arango.Linq
             var (aql, bindVars, _) = c.Compile();
             return await m.ExecuteAsync<T>(h, aql, bindVars);
         }
+
+        public static IQueryable<TSource> Update<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
+        {
+            return source;
+        }
+
+        public static IQueryable<TSource> Replace<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
+        {
+            return source;
+        }
+
+        public static IQueryable<TSource> Insert<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
+        {
+            return source;
+        }
+
+        public static IQueryable<TSource> Remove<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
+        {
+            return source;
+        }
     }
 }
