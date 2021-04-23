@@ -12,6 +12,7 @@ namespace Core.Arango.Linq
 
         public static IQueryable<T> AsScopeVariable<T>(this IArangoContext arango, string collection = null)
         {
+            // TODO: replace with saver dummy
             return new ArangoQueryableContext<T>(null, null, collection ?? typeof(T).Name);
         }
         
