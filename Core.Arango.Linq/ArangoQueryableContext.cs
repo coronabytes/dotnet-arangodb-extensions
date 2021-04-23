@@ -14,13 +14,6 @@ namespace Core.Arango.Linq
         string Collection { get; }   
     }
 
-    public interface IArangoQueryableContext
-    {
-        string Collection { get; }   
-        Expression Expression { get; }
-        IQueryProvider Provider { get; }
-    }
-    
     public class ArangoQueryableContext<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>, IArangoQueryableContext, IArangoQueryableCollection
     {
         public string Collection { get; }
