@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
+using Core.Arango.Linq.Internal;
 
 namespace Core.Arango.Linq
 {
@@ -60,5 +61,17 @@ namespace Core.Arango.Linq
 
         public Expression Expression { get; }
         public IQueryProvider Provider { get; }
+        public (string aql, Dictionary<string, object> bindVars) Compile()
+        {
+            if (Provider is IArangoQueryProvider p)
+            {
+                var c = AqlExpressionConverter.ParseQuery(Expression, p.Collection);
+                var (aql, bindVars, _) = c.Compile();
+
+                return (aql, bindVars);
+            }
+
+            return default;
+        }
     }
 }
