@@ -61,6 +61,8 @@ namespace Core.Arango.Linq.Tests
         public string Name { get; set; }
         public int Value { get; set; }
         
+        public int ProjectType { get; set; }
+        
         
         public Guid ClientKey { get; set; }
         public Client Client { get; set; }
@@ -100,7 +102,10 @@ namespace Core.Arango.Linq.Tests
         [Fact]
         public void TestWhereSelect()
         {
-            var test = Arango.AsQueryable<Project>("test").Where(z => z.Name == "A").Select(y => y.Name).ToList();
+            var test = Arango.AsQueryable<Project>("test")
+                .Where(z => z.Name == "A")
+                .Select(y => y.Name)
+                .ToList();
             foreach (var t in test)
             {
                 Assert.True(t == "A");
@@ -238,7 +243,10 @@ namespace Core.Arango.Linq.Tests
         public void TestInjection()
         {
             // var test = Arango.AsQueryable<Project>("test").Where(x => x.Name == "A" || x.Name == "B \" RETURN 42").Select(x => new ProjectProj {Name = x.Name}).ToList();
-            var test = Arango.AsQueryable<Project>("test").Where(x => x.Name == "A" || x.Name == "B \" RETURN 42").Select(x => x.Name).ToList();
+            var test = Arango
+                .AsQueryable<Project>("test")
+                .Where(x => x.Name == "A" || x.Name == "B \" RETURN 42")
+                .Select(x => x.Name).ToList();
             Assert.True(test.Count == 1);
         }
 
@@ -316,12 +324,35 @@ namespace Core.Arango.Linq.Tests
                 .AsScopeVariable<Client>()
                 .Where(x => x.Name.Length > 0)
                 .Select(x => x.Key);
-            
-            
+
+
             var test3 = Arango
                 .AsQueryable<Project>("test")
                 .Where(x => clientKeys.Any(k => k == x.ClientKey))
                 .Select(x => new {name = "kaspar"})
+                .ToList();
+
+            Assert.True(test3.Any());
+
+        }
+        
+        [Fact]
+        public void TestGrouping()
+        {
+
+            var clients = Arango.AsScopeVariable<Client>();
+
+            var test3 = Arango
+                .AsQueryable<Project>("test")
+                .Where(x => x.Name.Length > 2)
+                .GroupBy(x => new {x.ClientKey, x.ProjectType})
+                .Select(g => new
+                {
+                    ClientKey = g.Key.ClientKey,
+                    ProjectType = g.Key.ProjectType,
+                    Count = g.Count(),
+                    Projects = g.Select(x => x.Name).ToList()
+                })
                 .ToList();
 
             Assert.True(test3.Any());
@@ -376,6 +407,7 @@ namespace Core.Arango.Linq.Tests
                 Key = Guid.NewGuid(),
                 Name = "A",
                 Value = 1,
+                ProjectType = 1,
                 StartDate = new DateTime(2020, 04, 03).ToUniversalTime(),
                 StringList = new List<string>() {"hello", "you"},
                 ClientKey = cg1
@@ -385,6 +417,7 @@ namespace Core.Arango.Linq.Tests
                 Key = Guid.NewGuid(),
                 Name = "B",
                 Value = 2,
+                ProjectType = 1,
                 StartDate = DateTime.Now.AddDays(-1).ToUniversalTime(),
                 StringList = new List<string>() {"hello2", "you", "hello"},
                 ClientKey = cg1
@@ -394,6 +427,7 @@ namespace Core.Arango.Linq.Tests
                 Key = Guid.NewGuid(),
                 Name = "C",
                 Value = 3,
+                ProjectType = 2,
                 StartDate = new DateTime(3021, 1, 5).ToUniversalTime(),
                 StringList = new List<string>() {"me", "you", "everybody"}
             });
