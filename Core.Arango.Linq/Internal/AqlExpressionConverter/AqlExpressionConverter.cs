@@ -93,7 +93,6 @@ namespace Core.Arango.Linq.Internal
             var bindVars = new AqlBindVarsPool();
 
             var param = Expression.Parameter(typeof(object), "x");
-            
             _collection.SetParameter(param);
             
             var paramDict = new Dictionary<string, string>();
@@ -221,7 +220,7 @@ namespace Core.Arango.Linq.Internal
             
             foreach (var (queryable, variable) in defs)
             {
-                var definitionConvertable = ParseDefinition(queryable.Expression);
+                var definitionConvertable = ParseDefinition(queryable.Expression, context);
                 query.AddDefinition(variable, definitionConvertable);
             }
 
@@ -230,12 +229,19 @@ namespace Core.Arango.Linq.Internal
             return query;
         }
 
-        private static AqlConvertable ParseDefinition(Expression expression)
+        private static AqlConvertable ParseDefinition(Expression expression, AqlParseQueryContext context)
         {
             ArangoQueryableContext<object> c = null;
+            var collection = new AqlCollection(true);
+
+            var visitor = new AqlCollectionExpressionParser(collection, context,true);
+            visitor.Parse(expression);
             
-            
-            return new AqlPrimitive("[0,1]");
+            var param = Expression.Parameter(typeof(object), "x");
+            collection.SetParameter(param);
+
+
+            return collection;
         }
 
         public static AqlCollection ParseCollection(Expression collectionExpression, AqlParseQueryContext context)
@@ -261,6 +267,8 @@ namespace Core.Arango.Linq.Internal
         {
             _context = context;
         }
+        
+        
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
@@ -402,6 +410,20 @@ namespace Core.Arango.Linq.Internal
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
+            
+            if (node.Type.GetInterfaces().Contains(typeof(IArangoQueryableCollection)))
+            {
+                var f = Expression.Lambda( node ).Compile();
+                var value = f.DynamicInvoke();
+                    
+                var c = (IArangoQueryableCollection) value;
+
+                var collectionName = c.Collection;
+                
+                _aqlConvertable = new AqlPrimitive(collectionName);
+                return node;
+            }
+            
             if (node.Value is int)
             {
                 _aqlConvertable = new AqlPrimitive(node.Value.ToString());
@@ -424,7 +446,13 @@ namespace Core.Arango.Linq.Internal
 
             if (node.NodeType == ExpressionType.MemberAccess)
             {
-                if (node.Expression != null && node.Expression.NodeType == ExpressionType.Parameter)
+                if (node.Expression != null && node.Expression.Type == typeof(string) && node.Member.Name == "Length")
+                {
+                    var left = AqlExpressionConverter.ParseTerm(node.Expression, _context);
+                    _aqlConvertable = new AqlFunction("CHAR_LENGTH", new [] {left});
+                    return node;
+                }
+                else if (node.Expression != null && node.Expression.NodeType == ExpressionType.Parameter)
                 {
                     var left = AqlExpressionConverter.ParseTerm(node.Expression, _context);
                     if (node.Expression.Type == typeof(string))
@@ -448,29 +476,26 @@ namespace Core.Arango.Linq.Internal
                     _aqlConvertable = new AqlMemberAccess(left, memberName);
                     return node;                    
                 }
+                else if (node.Type.IsGenericType && node.Type.GetGenericTypeDefinition() == typeof(IQueryable<>))
+                {
+                    Expression<Func<IQueryable>> getQueryableExpr = Expression.Lambda<Func<IQueryable>>(node);
+                    var getQueryable = getQueryableExpr.Compile();
+                    var q = getQueryable();
+                    
+                    var v = _context.GetQueryiableDefinitionParameter(q, node.Member.Name);
+                    _aqlConvertable = new AqlVariable(v);
+                    
+                    var e = q.Expression;
+
+                    return node;
+                }
                 else
                 {
-                    if (node.Type.IsGenericType && node.Type.GetGenericTypeDefinition() == typeof(IQueryable<>))
-                    {
-                        Expression<Func<IQueryable>> getQueryableExpr = Expression.Lambda<Func<IQueryable>>(node);
-                        var getQueryable = getQueryableExpr.Compile();
-                        var q = getQueryable();
-                        
-                        var v = _context.GetQueryiableDefinitionParameter(q, node.Member.Name);
-                        _aqlConvertable = new AqlVariable(v);
-                        
-                        var e = q.Expression;
-
-                        return node;
-                    }
-                    else
-                    {
-                        Expression<Func<object>> le = Expression.Lambda<Func<object>>(Expression.Convert(node, typeof(object)));
-                        var compiledExpression = le.Compile();
-                        var value = compiledExpression();
-                        _aqlConvertable = new AqlConstant(value, node.Member.Name);
-                        return node;
-                    }
+                    Expression<Func<object>> le = Expression.Lambda<Func<object>>(Expression.Convert(node, typeof(object)));
+                    var compiledExpression = le.Compile();
+                    var value = compiledExpression();
+                    _aqlConvertable = new AqlConstant(value, node.Member.Name);
+                    return node;
                 }
                 
             }

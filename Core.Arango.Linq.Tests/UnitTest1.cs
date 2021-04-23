@@ -310,10 +310,10 @@ namespace Core.Arango.Linq.Tests
         }
         
         [Fact]
-        public void TestDelcareLet()
+        public void TestScopeVariable()
         {
             var clientKeys = Arango
-                .AsQueryable<Client>("test", "Client")
+                .AsScopeVariable<Client>()
                 .Where(x => x.Name.Length > 0)
                 .Select(x => x.Key);
             

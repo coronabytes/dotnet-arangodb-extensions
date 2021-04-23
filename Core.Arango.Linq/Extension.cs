@@ -9,6 +9,12 @@ namespace Core.Arango.Linq
 {
     public static class ArangoLinqExtension
     {
+
+        public static IQueryable<T> AsScopeVariable<T>(this IArangoContext arango, string collection = null)
+        {
+            return new ArangoQueryableContext<T>(null, null, collection ?? typeof(T).Name);
+        }
+        
         public static IQueryable<T> AsQueryable<T>(this IArangoContext arango, ArangoHandle db, string collection = null)
         {
             return new ArangoQueryableContext<T>(arango, db, collection ?? typeof(T).Name);

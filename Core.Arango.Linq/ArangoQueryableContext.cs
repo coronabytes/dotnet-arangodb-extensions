@@ -8,14 +8,19 @@ using System.Threading;
 namespace Core.Arango.Linq
 {
 
+    public interface IArangoQueryableCollection
+    {
+        string Collection { get; }   
+    }
+
     public interface IArangoQueryableContext
     {
-        string Collection { get; }
+        string Collection { get; }   
         Expression Expression { get; }
         IQueryProvider Provider { get; }
     }
     
-    public class ArangoQueryableContext<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>, IArangoQueryableContext
+    public class ArangoQueryableContext<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>, IArangoQueryableContext, IArangoQueryableCollection
     {
         public string Collection { get; }
 
