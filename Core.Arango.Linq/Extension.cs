@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Arango.Linq.Internal;
@@ -10,10 +12,32 @@ using Core.Arango.Modules;
 
 namespace Core.Arango.Linq
 {
+    public class ArangoLinqExtensionAttribute : Attribute
+    {
+        public ArangoLinqExtensionAttribute(string identifier)
+        {
+            Identifier = identifier;
+        }
+
+        public string Identifier { get; set; }
+    }
+
     public static class ArangoLinqExtension
     {
+        static ArangoLinqExtension()
+        {
+            var extension = typeof(ArangoLinqExtension)
+                .GetRuntimeMethods()
+                .Where(x => x.GetCustomAttribute<ArangoLinqExtensionAttribute>() != null)
+                .GroupBy(x => x.GetCustomAttribute<ArangoLinqExtensionAttribute>().Identifier)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .FirstOrDefault(x => x.Count > 1);
 
-        public static IQueryable<T> AsScopeVariable<T>(this IArangoContext arango, string collection = null)
+            if (extension != null)
+                throw new InvalidOperationException($"Multiple extention identifier {extension.Key} found");
+        }
+
+        public static IQueryable<T> AsScopeVariable<T>(this IArangoContext arango, string collection)
         {
             // TODO: replace with saver dummy
             
@@ -21,7 +45,16 @@ namespace Core.Arango.Linq
             // It needs to support expression chaining but not enumeration. 
             return new ArangoQueryableContext<T>(null, null, collection ?? typeof(T).Name);
         }
-        
+
+        public static IQueryable<T> AsScopeVariable<T>(this IArangoContext arango)
+        {
+            // TODO: replace with saver dummy
+
+            // The base expression needs to be a constant of IArangoQueryableCollection. Its Collection property will be read by the parser.
+            // It needs to support expression chaining but not enumeration. 
+            return new ArangoQueryableContext<T>(null, null, typeof(T).Name);
+        }
+
         public static IQueryable<T> AsQueryable<T>(this IArangoContext arango, ArangoHandle db, string collection = null)
         {
             return new ArangoQueryableContext<T>(arango, db, collection ?? typeof(T).Name);
@@ -132,26 +165,32 @@ namespace Core.Arango.Linq
 
         #endregion
 
+        private static readonly ConcurrentDictionary<string, MethodInfo> CachedExtentions = new ConcurrentDictionary<string, MethodInfo>();
+
+        internal static MethodInfo FindExtention(string identifier, params Type[] arguments)
+        {
+            string key = $"{identifier}_{string.Join("_", arguments.Select(x => x.FullName))}";
+
+            return CachedExtentions
+                .GetOrAdd(key,
+                    typeof(ArangoLinqExtension).GetRuntimeMethods()
+                        .ToList()
+                        .First(x => x.GetCustomAttribute<ArangoLinqExtensionAttribute>()?.Identifier == identifier)
+                        .MakeGenericMethod(arguments));
+        }
+
         #region Mutation
-
-        public static IQueryable<TSource> Update<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
+        
+        [ArangoLinqExtension("Update")]
+        public static IQueryable<TSource> Update<TSource>(this IQueryable<TSource> source, Expression<Func<TSource, object>> withSelector, string collection)
         {
-            return source;
-        }
-
-        public static IQueryable<TSource> Replace<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
-        {
-            return source;
-        }
-
-        public static IQueryable<TSource> Insert<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
-        {
-            return source;
-        }
-
-        public static IQueryable<TSource> Remove<TSource, TResult>([NotNull] this IQueryable<TSource> source, Expression<Func<TSource, TResult>> update, string collection)
-        {
-            return source;
+            return source.Provider.CreateQuery<TSource>(
+                Expression.Call(
+                    FindExtention("Update", typeof(TSource)),
+                    source.Expression,
+                    Expression.Quote(withSelector),
+                    Expression.Constant(collection)
+                ));
         }
 
         #endregion

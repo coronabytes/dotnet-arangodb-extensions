@@ -3,6 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Core.Arango.Linq
 {
+    /// <summary>
+    /// Built-on AQL functions
+    /// </summary>
     [SuppressMessage("CodeQuality", "IDE0060")]
     public static partial class Aql
     {
