@@ -10,6 +10,15 @@ namespace Core.Arango.Linq
             Name = name;
         }
 
+        public AqlFunctionAttribute(string name, bool isProperty)
+        {
+            Name = name;
+            IsProperty = isProperty;
+        }
+
+
         public string Name { get; }
+
+        public bool IsProperty { get; }
     }
 }
