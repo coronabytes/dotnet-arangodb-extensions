@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -13,6 +14,9 @@ namespace Core.Arango.Linq.Internal
     {
         private readonly bool _isCompound;
 
+
+        public abstract AqlConvertable Accept(AqlVisitor visitor);
+        
         public AqlConvertable(bool isCompound)
         {
             _isCompound = isCompound;
@@ -41,12 +45,26 @@ namespace Core.Arango.Linq.Internal
         {
             consumer.ConsumeSelect(this);
         }
+
+        public bool Equals(AqlSimpleSelect other)
+        {
+            return other != null
+                   && this.Body == other.Body
+                   && this.Parameter == other.Parameter;
+        }
     }
     
     public class AqlSort
     {
         public AqlConvertable Body { get; set; }
         public ParameterExpression Parameter { get; set; }
+        
+        public bool Equals(AqlSort other)
+        {
+            return other != null
+                   && this.Body == other.Body
+                   && this.Parameter == other.Parameter;
+        }
     }
     
     public class AqlFilter : AqlParseQueryContextBuildStackElement
@@ -376,6 +394,19 @@ namespace Core.Arango.Linq.Internal
             {
                 switch (node.Method.Name)
                 {
+                    case "Count":
+                    {
+                        var inner = node.Arguments[0];
+
+                        var term = AqlExpressionConverter.ParseTerm(inner, _context);
+                        
+                        var length = new AqlFunction("LENGTH", new []{ term });
+
+
+                        _aqlConvertable = length;
+                        
+                        return node;
+                    }
                     case "ToList":
                     {
                         var inner = node.Arguments[0];
@@ -606,45 +637,40 @@ namespace Core.Arango.Linq.Internal
 
 
 
-    public class AqlDateAdd : AqlConvertable
+    public class AqlDateAdd : AqlFunction
     {
-        private readonly AqlConvertable _date;
-        private readonly AqlConvertable _amount;
-        private readonly AqlConvertable _unit;
 
-        public AqlDateAdd(AqlConvertable date, AqlConvertable amount, AqlConvertable unit) : base(false)
+        public AqlDateAdd(AqlConvertable date, AqlConvertable amount, AqlConvertable unit) : base("DATE_ADD", new []{ date, amount, unit })
         {
-            _date = date;
-            _amount = amount;
-            _unit = unit;
         }
-        
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            // DATE_ADD(DATE_NOW(), -1, "day")
-
-            var d = _date.Convert(parameters, bindVars);
-            var a = _amount.Convert(parameters, bindVars);
-            var u = _unit.Convert(parameters, bindVars);
-            
-            return $"DATE_ADD({d}, {a}, {u})";
-            throw new NotImplementedException();
-        }
-
         
     }
 
     public class AqlConcat : AqlConvertable
     {
-        private readonly AqlConvertable _left;
-        private readonly AqlConvertable _right;
-        private readonly string _preferredName;
+        public AqlConvertable Left { get; }
+        public AqlConvertable Right { get; }
+        public string PreferredName { get; }
 
+        public bool Equals(AqlConcat other)
+        {
+            return other != null
+                   && this.Left == other.Left
+                   && this.Right == other.Right
+                   && this.PreferredName == other.PreferredName;
+        }
+        
+        
         public AqlConcat(AqlConvertable left, AqlConvertable right, string preferredName) : base(false)
         {
-            _left = left;
-            _right = right;
-            _preferredName = preferredName;
+            Left = left;
+            Right = right;
+            PreferredName = preferredName;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitConcat(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
@@ -668,19 +694,19 @@ namespace Core.Arango.Linq.Internal
             }
 
             
-            if (TryGetStringFromStringConstant(_left, out var l) &&
-                TryGetStringFromStringConstant(_right, out var r))
+            if (TryGetStringFromStringConstant(Left, out var l) &&
+                TryGetStringFromStringConstant(Right, out var r))
             {
                 var result = l + r;
         
-                var c = new AqlConstant(result, _preferredName);
+                var c = new AqlConstant(result, PreferredName);
         
                 return c.Convert(parameters, bindVars);
 
             }
 
-            var cLeft = _left.Convert(parameters, bindVars);
-            var cRight = _right.Convert(parameters, bindVars);
+            var cLeft = Left.Convert(parameters, bindVars);
+            var cRight = Right.Convert(parameters, bindVars);
 
             return $"CONCAT({cLeft}, {cRight})";
             
@@ -689,12 +715,21 @@ namespace Core.Arango.Linq.Internal
 
     public class AqlReturnObjectProjection : AqlConvertable
     {
+        public Dictionary<string, AqlConvertable> MemberDict { get; } = new Dictionary<string, AqlConvertable>();
 
+        public bool Equals(AqlReturnObjectProjection other)
+        {
+            return other != null
+                   && this.MemberDict.SequenceEqual(other.MemberDict);
+        }
 
-        private Dictionary<string, AqlConvertable> memberDict = new Dictionary<string, AqlConvertable>();
-        
         public AqlReturnObjectProjection() : base(false)
         {
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitReturnObjectProjection(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
@@ -703,10 +738,10 @@ namespace Core.Arango.Linq.Internal
 
             sb.AppendLine("{");
 
-            var enumerator = memberDict.GetEnumerator();
+            var enumerator = MemberDict.GetEnumerator();
 
 
-            var memberAssignments = memberDict.Select(x =>
+            var memberAssignments = MemberDict.Select(x =>
             {
                 var (member, valueConvertable) = x;
                 var value = valueConvertable.Convert(parameters, bindVars);
@@ -722,7 +757,7 @@ namespace Core.Arango.Linq.Internal
 
         public void AddMember(string member, AqlConvertable value)
         {
-            memberDict.Add(member, value);
+            MemberDict.Add(member, value);
         }
     }
 

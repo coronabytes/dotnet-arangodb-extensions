@@ -113,6 +113,7 @@ namespace Core.Arango.Linq.Internal
                                     var member = expr.Members[i].Name;
                                     var value = AqlExpressionConverter.ParseTerm(expr.Arguments[i], _context);
                                     var memberVar = _context.MakeNewVariable(member);
+                                    
                                     proj.AddMember(member, value, memberVar);
                                 }
 
@@ -132,19 +133,17 @@ namespace Core.Arango.Linq.Internal
                                         var assignment = (MemberAssignment) binding;
                                         var member = assignment.Member.Name;
                                         var value = AqlExpressionConverter.ParseTerm(assignment.Expression, _context);
+                                        var memberVar = _context.MakeNewVariable(member);
 
-                                        proj.AddMember(member, value);
+                                        proj.AddMember(member, value, memberVar);
 
                                     } else
                                     {
                                         throw new UnhandledExpressionException(init); 
                                     }
-                                    
 
                                     // proj.AddBinding(binding.i);
                                 }
-                                
-                                
 
                                 body = proj;
                             }
@@ -298,12 +297,12 @@ namespace Core.Arango.Linq.Internal
     
     public class AqlCollection : AqlConvertable, BuildStackConsumer
     {
-        private readonly bool _withBrackets;
-        private AqlSimpleSelect _selectBlock = null;
-        private int? _limit;
-        private AqlSort _sortBlock = null;
-        private ParameterExpression _parameter;
-        private AqlGrouping _grouping = null;
+        public bool WithBrackets { get; }
+        public AqlSimpleSelect SelectBlock { get; private set; } = null;
+        public int? Limit { get; private set; }
+        public AqlSort SortBlock { get; private set; } = null;
+        public ParameterExpression Parameter { get; private set; }
+        public AqlGrouping Grouping { get; private set; } = null;
 
 
         /// <summary>
@@ -312,18 +311,23 @@ namespace Core.Arango.Linq.Internal
         public AqlQueryOutputBehaviour OutputBehaviour { get; set; } = AqlQueryOutputBehaviour.NormalList;
 
 
-        public List<AqlFilter> filterBlocks { get; set; } = new List<AqlFilter>();
+        public List<AqlFilter> FilterBlocks { get; set; } = new List<AqlFilter>();
         public AqlConvertable Collection { get; set; }
 
 
         public AqlCollection(bool withBrackets = true) : base(true)
         {
-            _withBrackets = withBrackets;
+            WithBrackets = withBrackets;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitCollection(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
-            var projectionVarLabel = _parameter.Name;
+            var projectionVarLabel = Parameter.Name;
             
             
             Dictionary<string, string> BaseParamsWith(string k, string v)
@@ -334,10 +338,10 @@ namespace Core.Arango.Linq.Internal
             }
 
 
-            var addBrackets = this.filterBlocks.Count > 1;
+            var addBrackets = this.FilterBlocks.Count > 1;
 
             
-            var filters = filterBlocks
+            var filters = FilterBlocks
                 .Select(x => 
                     x.Body.Convert(
                         BaseParamsWith(x.Parameter.Name, projectionVarLabel),
@@ -351,7 +355,7 @@ namespace Core.Arango.Linq.Internal
 
             var sb = new StringBuilder();
             
-            if (_withBrackets)
+            if (WithBrackets)
                 sb.AppendLine("(");
 
             var collectionAql = Collection.Convert(
@@ -365,30 +369,30 @@ namespace Core.Arango.Linq.Internal
                 sb.AppendLine($"FILTER {filterString}");
             }
 
-            if (_limit.HasValue)
+            if (Limit.HasValue)
             {
-                sb.AppendLine($"LIMIT {_limit.Value}");
+                sb.AppendLine($"LIMIT {Limit.Value}");
             }
 
-            if (_sortBlock != null)
+            if (SortBlock != null)
             {
-                var sortString = _sortBlock.Body.Convert(
-                    BaseParamsWith(_sortBlock.Parameter.Name, projectionVarLabel),
+                var sortString = SortBlock.Body.Convert(
+                    BaseParamsWith(SortBlock.Parameter.Name, projectionVarLabel),
                     bindVars
                 );
                 sb.AppendLine($"SORT {sortString}");
             }
 
-            if (_grouping != null)
+            if (Grouping != null)
             {
-                _grouping.SetParameter(projectionVarLabel);
-                var groupingStr = _grouping.Convert(parameters, bindVars);
+                Grouping.SetParameter(projectionVarLabel);
+                var groupingStr = Grouping.Convert(parameters, bindVars);
                 sb.AppendLine($"{groupingStr}");
             }
-            else if (_selectBlock != null)
+            else if (SelectBlock != null)
             {
-                var selectString = _selectBlock.Body.Convert(
-                    BaseParamsWith(_selectBlock.Parameter.Name, projectionVarLabel),
+                var selectString = SelectBlock.Body.Convert(
+                    BaseParamsWith(SelectBlock.Parameter.Name, projectionVarLabel),
                     bindVars
                 );
                 sb.AppendLine($"RETURN {selectString}");
@@ -398,7 +402,7 @@ namespace Core.Arango.Linq.Internal
                 sb.AppendLine($"RETURN {projectionVarLabel}");
             }
 
-            if (_withBrackets)
+            if (WithBrackets)
                 sb.AppendLine(")");
 
             return sb.ToString();
@@ -406,27 +410,27 @@ namespace Core.Arango.Linq.Internal
         
         public void AddFilterBlock(AqlFilter filterBlock)
         {
-            this.filterBlocks.Add(filterBlock);
+            this.FilterBlocks.Add(filterBlock);
         }
 
         public void SetSelect(AqlSimpleSelect selectBlock)
         {
-            this._selectBlock = selectBlock;
+            this.SelectBlock = selectBlock;
         }
 
         public void SetLimit(int i)
         {
-            this._limit = i;
+            this.Limit = i;
         }
         
         public void SetParameter(ParameterExpression p)
         {
-            this._parameter = p;
+            this.Parameter = p;
         }
 
         public void SetSort(AqlSort aqlSort)
         {
-            this._sortBlock = aqlSort;
+            this.SortBlock = aqlSort;
         }
 
         public void ConsumeFilter(AqlFilter filter)
@@ -446,7 +450,7 @@ namespace Core.Arango.Linq.Internal
 
         private void SetGrouping(AqlGrouping aqlGrouping)
         {
-            this._grouping = aqlGrouping;
+            this.Grouping = aqlGrouping;
         }
     }
 

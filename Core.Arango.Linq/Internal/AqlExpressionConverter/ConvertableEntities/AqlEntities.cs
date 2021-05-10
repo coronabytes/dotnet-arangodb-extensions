@@ -17,7 +17,12 @@ namespace Core.Arango.Linq.Internal
         {
             _value = value;
         }
-        
+
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitPrimitive(this);
+        }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
@@ -32,6 +37,11 @@ namespace Core.Arango.Linq.Internal
         public AqlVariable(AqlQueryVariable variable) : base(false)
         {
             _variable = variable;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitVariable(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
@@ -56,6 +66,11 @@ namespace Core.Arango.Linq.Internal
             _preferredName = preferredName;
         }
 
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VistConstant(this);
+        }
+
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
             var label = bindVars.AddNewVar(_value, _preferredName);
@@ -65,16 +80,21 @@ namespace Core.Arango.Linq.Internal
     
     public class AqlParameter : AqlConvertable
     {
-        private readonly ParameterExpression _expr;
+        public ParameterExpression Expr { get; }
 
         public AqlParameter(ParameterExpression expr) : base(false)
         {
-            _expr = expr;
+            Expr = expr;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitParameter(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
-            var paramName = _expr.Name;
+            var paramName = Expr.Name;
             var o = parameters[paramName];
             return $"{o}";
         }
@@ -82,80 +102,117 @@ namespace Core.Arango.Linq.Internal
     
     public class AqlMemberAccess : AqlConvertable
     {
-        private readonly AqlConvertable _left;
-        private readonly string _member;
+        public AqlConvertable Left { get; }
+        public string Member { get; }
 
         public AqlMemberAccess(AqlConvertable left, string member) : base(false)
         {
-            _left = left;
-            _member = member;
+            Left = left;
+            Member = member;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return base.Equals(obj as AqlMemberAccess);
+        }
+
+        public bool Equals(AqlMemberAccess other)
+        {
+            return other != null
+                   && this.Left == other.Left
+                   && this.Member == other.Member;
+        }
+        
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitMemberAccess(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
-            var l = _left.Convert(parameters, bindVars);
-            return $"{l}.{_member}";
+            var l = Left.Convert(parameters, bindVars);
+            return $"{l}.{Member}";
         }
     }
     
     public class AqlFunction : AqlConvertable
     {
-        private readonly string _functionName;
-        private readonly AqlConvertable[] _arguments;
+        public string FunctionName { get; }
+        public AqlConvertable[] Arguments { get; }
 
+        public bool Equals(AqlFunction other)
+        {
+            return other != null
+                   && this.FunctionName == other.FunctionName
+                   && this.Arguments.SequenceEqual(other.Arguments);
+        }
 
         public AqlFunction(string functionName, AqlConvertable[] arguments) : base(false)
         {
-            _functionName = functionName;
-            _arguments = arguments;
+            FunctionName = functionName;
+            Arguments = arguments;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitFunction(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
             var sb = new StringBuilder();
 
-            var args = String.Join(", ", _arguments.Select(x => x.Convert(parameters, bindVars)));
+            var args = String.Join(", ", Arguments.Select(x => x.Convert(parameters, bindVars)));
             
-            sb.AppendLine($"{_functionName}({args})");
+            sb.AppendLine($"{FunctionName}({args})");
 
             return sb.ToString();
         }
     }
 
-    public class AqlLength : AqlConvertable
+    public class AqlLength : AqlFunction
     {
         private readonly AqlCollection _collection;
 
-        public AqlLength(AqlCollection collection) : base(false)
+        public AqlLength(AqlCollection collection) : base("LENGTH", new []{ collection })
         {
             _collection = collection;
-        }
-        
-        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
-        {
-            var sb = new StringBuilder();
-            
-            sb.AppendLine($"LENGTH({_collection.Convert(parameters, bindVars)})");
-
-            return sb.ToString();
         }
     }
 
     public class AqlInList : AqlConvertable
     {
-        private readonly AqlConvertable _element;
-        private readonly AqlConvertable _container;
+        public AqlConvertable Element { get; }
+        public AqlConvertable Container { get; }
 
         public AqlInList(AqlConvertable element, AqlConvertable container) : base(true)
         {
-            _element = element;
-            _container = container;
+            Element = element;
+            Container = container;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return Equals(obj as AqlInList);
+        }
+
+        public bool Equals(AqlInList other)
+        {
+            return other != null
+                   && this.Element == other.Element
+                   && this.Container == other.Container;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitInList(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
-            var c = _container.Convert(parameters, bindVars,true);
-            var e = _element.Convert(parameters, bindVars, true);
+            var c = Container.Convert(parameters, bindVars,true);
+            var e = Element.Convert(parameters, bindVars, true);
             return $"{e} IN {c}";
         }
     }
@@ -176,23 +233,28 @@ namespace Core.Arango.Linq.Internal
             {ExpressionType.LessThanOrEqual, "<="},
             {ExpressionType.Add, "+"}
         };
-        
-        private readonly AqlConvertable _left;
-        private readonly AqlConvertable _right;
-        private readonly string _operatorStr;
+
+        public AqlConvertable Left { get; }
+        public AqlConvertable Right { get; }
+        public string OperatorStr { get; }
 
         public AqlBinary(AqlConvertable left, AqlConvertable right, string operatorStr) : base(true)
         {
-            _left = left;
-            _right = right;
-            _operatorStr = operatorStr;
+            Left = left;
+            Right = right;
+            OperatorStr = operatorStr;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitBinary(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
-            var l = _left.Convert(parameters, bindVars,true);
-            var r = _right.Convert(parameters, bindVars, true);
-            return $"{l} {_operatorStr} {r}";
+            var l = Left.Convert(parameters, bindVars,true);
+            var r = Right.Convert(parameters, bindVars, true);
+            return $"{l} {OperatorStr} {r}";
         }
     }
     
@@ -203,20 +265,37 @@ namespace Core.Arango.Linq.Internal
         {
             {ExpressionType.Not, "!"},
         };
-        
-        private readonly AqlConvertable _inner;
-        private readonly string _operatorStr;
+
+        public AqlConvertable Inner { get; }
+        public string OperatorStr { get; }
 
         public AqlUnary(AqlConvertable inner, string operatorStr) : base(true)
         {
-            _inner = inner;
-            _operatorStr = operatorStr;
+            Inner = inner;
+            OperatorStr = operatorStr;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return Equals(obj as AqlUnary);
+        }
+
+        public bool Equals(AqlUnary other)
+        {
+            return other != null
+                   && this.Inner == other.Inner
+                   && this.OperatorStr == other.OperatorStr;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitUnary(this);
         }
 
         public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
         {
-            var i = _inner.Convert(parameters, bindVars, true);
-            return $"{_operatorStr} {i}";
+            var i = Inner.Convert(parameters, bindVars, true);
+            return $"{OperatorStr} {i}";
         }
     }
 }
