@@ -110,7 +110,7 @@ namespace Core.Arango.Linq.Internal
             var select = VisitSelectBlock(aqlGrouping.SelectBlock);
             var keyProjection = VisitGroupKeyProjection(aqlGrouping.KeyProjection);
             
-            var c = new AqlGrouping(keyProjection);
+            var c = new AqlGrouping(keyProjection, aqlGrouping.GroupVariable);
             if (select != null)
             {
                 c.SetSelect(select);

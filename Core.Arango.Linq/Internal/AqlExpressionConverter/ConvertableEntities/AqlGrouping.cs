@@ -126,11 +126,16 @@ namespace Core.Arango.Linq.Internal
         
         public Dictionary<AqlVariable, AqlConvertable> Aggregates = new Dictionary<AqlVariable, AqlConvertable>();
         
+        public AqlQueryVariable GroupVariable { get; }
+        
 
-        public AqlGrouping(AqlGroupingKeyProjection keyProjection) : base(false)
+        public AqlGrouping(AqlGroupingKeyProjection keyProjection, AqlQueryVariable groupVar) : base(false)
         {
             KeyProjection = keyProjection;
+            GroupVariable = groupVar;
         }
+
+        
 
         public bool Equals(AqlGrouping other)
         {
@@ -157,7 +162,7 @@ namespace Core.Arango.Linq.Internal
             
             var sb = new StringBuilder();
 
-            var groupVar = "g";
+            var groupVar = GroupVariable.Name;
 
             var loadWholeCollection = false;
             
@@ -186,11 +191,6 @@ namespace Core.Arango.Linq.Internal
             
             var keysString = String.Join(", ", convertedKeySetters);
 
-            
-
-            
-            
-            
             // var postGroupParams = new Dictionary<string, string>(parameters);
 
 

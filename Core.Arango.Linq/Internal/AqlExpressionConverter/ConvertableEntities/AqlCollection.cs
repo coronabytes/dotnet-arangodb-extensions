@@ -163,8 +163,9 @@ namespace Core.Arango.Linq.Internal
                         var groupKeys = GetGroupingKeyProjection( keyProjection);
 
                         var test2 = "test2";
-                        
-                        var grouping = new AqlGrouping(groupKeys);
+
+                        var gv = _context.MakeNewVariable("g");
+                        var grouping = new AqlGrouping(groupKeys, gv);
                         _context.ConsumeBuildStack(grouping);
                         _context.AddElementToBuildStack(grouping);
                         
