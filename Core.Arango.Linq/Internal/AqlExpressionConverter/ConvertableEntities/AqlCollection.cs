@@ -11,32 +11,43 @@ namespace Core.Arango.Linq.Internal
     
     public class AqlCollectionExpressionParser
     {
-        private readonly AqlCollection _collection;
         private readonly AqlParseQueryContext _context;
         private readonly bool _useFirstSelectAsReturn;
         private bool _useNextSelectAsReturn;
         
         private bool alreadyParsed = false;
 
-        public AqlCollectionExpressionParser(AqlCollection collection, AqlParseQueryContext context, bool useFirstSelectAsReturn = false)
+        public AqlCollectionExpressionParser(AqlParseQueryContext context, bool useFirstSelectAsReturn = false)
         {
-            _collection = collection;
             _context = context;
             _useFirstSelectAsReturn = useFirstSelectAsReturn;
         }
 
 
-        public void Parse(Expression collectionExpression)
+        public AqlCollection Parse(Expression collectionExpression)
         {
             if (alreadyParsed)
                 throw new Exception("Parser is one time use only!");
             
             this._useNextSelectAsReturn = _useFirstSelectAsReturn;
             var inner = ParseLayer(collectionExpression);
-            _collection.Collection = inner;
-            _context.ConsumeBuildStack(_collection);
+            // _collection.Collection = inner;
+            // _context.ConsumeBuildStack(_collection);
             
             alreadyParsed = true;
+
+            if (!_context.BuildStackElements.Any()  && inner is AqlCollection)
+            {
+                return (AqlCollection) inner;
+            }
+            else
+            {
+                var c = new AqlCollection(false);
+                c.Collection = inner;
+                _context.ConsumeBuildStack(c);
+
+                return c;
+            }
         }
 
         private  AqlConvertable ParseLayer(Expression node)
@@ -70,7 +81,9 @@ namespace Core.Arango.Linq.Internal
                 {
                     case "SingleOrDefault":
                     {
-                        _collection.OutputBehaviour = AqlQueryOutputBehaviour.SingleOrDefault;
+                        var b = new AqlOutputBehaviour(AqlQueryOutputBehaviour.SingleOrDefault);
+                        
+                        _context.AddElementToBuildStack(b);
 
                         if (node.Arguments.Count > 1)
                         {
@@ -230,7 +243,60 @@ namespace Core.Arango.Linq.Internal
 
                             return body;
                         }
+
+                        // var alreadySelectOnStack = _context.BuildStackElements.Any(x => x is AqlSimpleSelect);
                         
+                        
+                        {
+                            
+                            
+                            
+                            var inner = node.Arguments[0];
+                            var selectLambda = (LambdaExpression) (UnquoteExpression(node.Arguments[1]));
+                            var parameter = selectLambda.Parameters[0];
+
+                            var body = GetSelectBody(selectLambda);
+
+                            var select = new AqlSimpleSelect() {Body = body, Parameter = parameter};
+
+
+                            var subSelectRequired =
+                                _context.BuildStackElements.Any(x => x is AqlFilter || x is AqlSimpleSelect);
+
+                            if (subSelectRequired)
+                            {
+
+                                var coll = new AqlCollection();
+                                var paramVar = _context.MakeNewVariable("q");
+                                var param = Expression.Parameter(typeof(object), paramVar.Name);
+                                coll.SetParameter(param);
+                                
+                                var tempStack = _context.BuildStackElements.ToList();
+                                _context.BuildStackElements.Clear();
+
+                                _context.AddElementToBuildStack(select);
+                                coll.Collection = ParseLayer(inner);
+                                _context.ConsumeBuildStack(coll);
+
+                                tempStack.Reverse();
+                                foreach (var e in tempStack)
+                                {
+                                    _context.AddElementToBuildStack(e);
+                                }
+                                
+
+                                return coll;
+                            }
+                            else
+                            {
+                                _context.AddElementToBuildStack(select);
+
+                                return ParseLayer(inner);
+                            }
+                        }
+
+                        #region old select handling
+
                         if (_useNextSelectAsReturn)
                         {
                             _useNextSelectAsReturn = false;
@@ -261,6 +327,9 @@ namespace Core.Arango.Linq.Internal
 
                             return selectCollection;
                         }
+
+                        #endregion
+                        
                     }
                     case "Take":
                     {
@@ -270,7 +339,12 @@ namespace Core.Arango.Linq.Internal
                         var limitValue = compiledExpression();
                         var inner = node.Arguments[0];
                         
-                        _collection.SetLimit(limitValue);
+                        var limit = new AqlLimit(limitValue);
+                        
+                        _context.AddElementToBuildStack(limit);
+                        
+                        // throw new NotImplementedException();
+                        //_collection.SetLimit(limitValue);
                         
                         return ParseLayer(inner);
                     }
@@ -285,7 +359,10 @@ namespace Core.Arango.Linq.Internal
                         
                         var inner = node.Arguments[0];
                         
-                        _collection.SetSort(aqlSort);
+                        _context.AddElementToBuildStack(aqlSort);
+                        
+                        // throw new NotImplementedException();
+                        // _collection.SetSort(aqlSort);
                         
                         return ParseLayer(inner);
                     }
@@ -298,7 +375,7 @@ namespace Core.Arango.Linq.Internal
     
     public class AqlCollection : AqlConvertable, BuildStackConsumer
     {
-        public bool WithBrackets { get; }
+        public bool WithBrackets { get; set; }
         public AqlSimpleSelect SelectBlock { get; private set; } = null;
         public int? Limit { get; private set; }
         public AqlSort SortBlock { get; private set; } = null;
@@ -360,7 +437,7 @@ namespace Core.Arango.Linq.Internal
                 sb.AppendLine("(");
 
             var collectionAql = Collection.Convert(
-                BaseParamsWith(projectionVarLabel, projectionVarLabel),
+                parameters,
                 bindVars);
             
             sb.AppendLine($"FOR {projectionVarLabel} IN {collectionAql}");
@@ -447,6 +524,21 @@ namespace Core.Arango.Linq.Internal
         public void ConsumeGrouping(AqlGrouping aqlGrouping)
         {
             SetGrouping(aqlGrouping);
+        }
+
+        public void ConsumeSort(AqlSort aqlSort)
+        {
+            this.SetSort(aqlSort);
+        }
+
+        public void ConsumeLimit(AqlLimit aqlLimit)
+        {
+            this.Limit = aqlLimit.Limit;
+        }
+
+        public void ConsumeOutputBehaviour(AqlOutputBehaviour aqlOutputBehaviour)
+        {
+            this.OutputBehaviour = aqlOutputBehaviour.Behaviour;
         }
 
         private void SetGrouping(AqlGrouping aqlGrouping)

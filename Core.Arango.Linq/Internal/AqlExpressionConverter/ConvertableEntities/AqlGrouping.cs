@@ -254,6 +254,21 @@ namespace Core.Arango.Linq.Internal
             throw new System.NotImplementedException();
         }
 
+        public void ConsumeSort(AqlSort aqlSort)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ConsumeLimit(AqlLimit aqlLimit)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ConsumeOutputBehaviour(AqlOutputBehaviour aqlOutputBehaviour)
+        {
+            throw new NotImplementedException();
+        }
+
         public void FeedToConsumer(BuildStackConsumer consumer)
         {
             consumer.ConsumeGrouping(this);

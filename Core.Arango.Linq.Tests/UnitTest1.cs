@@ -117,7 +117,10 @@ namespace Core.Arango.Linq.Tests
         {
             var test = Arango.AsQueryable<Project>("test")
                 // .Where(x =>  Aql.DATE_ADD(x.StartDate, 1, "day") >= DateTime.UtcNow)
-                .Where(x =>  x.StartDate.AddDays(1) >= DateTime.UtcNow)
+                .Where(x => x.Name.Length < 2)
+                .Select(x => x.StartDate)
+                .Where(x =>  x.AddDays(1) >= DateTime.UtcNow)
+                // .Select(x => x.Name)
                 .ToList();
 
             test.ToArray();

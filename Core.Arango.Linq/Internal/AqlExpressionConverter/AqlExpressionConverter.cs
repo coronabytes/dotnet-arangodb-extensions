@@ -53,8 +53,38 @@ namespace Core.Arango.Linq.Internal
                    && this.Parameter == other.Parameter;
         }
     }
+
+    public class AqlOutputBehaviour : AqlParseQueryContextBuildStackElement
+    {
+        public AqlQueryOutputBehaviour Behaviour { get; }
+
+        public AqlOutputBehaviour(AqlQueryOutputBehaviour behaviour)
+        {
+            Behaviour = behaviour;
+        }
+
+        public void FeedToConsumer(BuildStackConsumer consumer)
+        {
+            consumer.ConsumeOutputBehaviour(this);
+        }
+    }
+
+    public class AqlLimit : AqlParseQueryContextBuildStackElement
+    {
+        public int Limit { get; }
+
+        public AqlLimit(int limit)
+        {
+            Limit = limit;
+        }
+
+        public void FeedToConsumer(BuildStackConsumer consumer)
+        {
+            consumer.ConsumeLimit(this);
+        }
+    }
     
-    public class AqlSort
+    public class AqlSort : AqlParseQueryContextBuildStackElement
     {
         public AqlConvertable Body { get; set; }
         public ParameterExpression Parameter { get; set; }
@@ -64,6 +94,11 @@ namespace Core.Arango.Linq.Internal
             return other != null
                    && this.Body == other.Body
                    && this.Parameter == other.Parameter;
+        }
+
+        public void FeedToConsumer(BuildStackConsumer consumer)
+        {
+            consumer.ConsumeSort(this);
         }
     }
     
@@ -158,6 +193,9 @@ namespace Core.Arango.Linq.Internal
         void ConsumeFilter(AqlFilter filter);
         void ConsumeSelect(AqlSimpleSelect aqlSimpleSelect);
         void ConsumeGrouping(AqlGrouping aqlGrouping);
+        void ConsumeSort(AqlSort aqlSort);
+        void ConsumeLimit(AqlLimit aqlLimit);
+        void ConsumeOutputBehaviour(AqlOutputBehaviour aqlOutputBehaviour);
     }
     
     public class AqlParseQueryContext
@@ -169,21 +207,22 @@ namespace Core.Arango.Linq.Internal
 
 
         private Regex rgx = new Regex("[^a-zA-Z0-9_]", RegexOptions.Compiled);
-        
-        private LinkedList<AqlParseQueryContextBuildStackElement> _buildStackElements = new LinkedList<AqlParseQueryContextBuildStackElement>();
+
+        public LinkedList<AqlParseQueryContextBuildStackElement> BuildStackElements { get; } =
+            new LinkedList<AqlParseQueryContextBuildStackElement>();
 
         public void AddElementToBuildStack(AqlParseQueryContextBuildStackElement element)
         {
-            _buildStackElements.AddFirst(element);
+            BuildStackElements.AddFirst(element);
         }
 
         public void ConsumeBuildStack(BuildStackConsumer consumer)
         {
-            foreach (var element in _buildStackElements)
+            foreach (var element in BuildStackElements)
             {
                 element.FeedToConsumer(consumer);
             }
-            _buildStackElements.Clear();
+            BuildStackElements.Clear();
         }
         
         private string GetLegalVariableName(string name)
@@ -260,14 +299,13 @@ namespace Core.Arango.Linq.Internal
 
         public static AqlQuery ParseQuery(Expression queryExpression, string collection)
         {
-            var queryCollection = new AqlCollection(false);
+            // var queryCollection = new AqlCollection(false);
             var context = new AqlParseQueryContext();
             
-            var visitor = new AqlCollectionExpressionParser(queryCollection, context,true);
-            visitor.Parse(queryExpression);
-            queryCollection.Collection = new AqlPrimitive(collection);
+            var visitor = new AqlCollectionExpressionParser(context,true);
+            var term = visitor.Parse(queryExpression);
 
-            var query = new AqlQuery(queryCollection);
+            var query = new AqlQuery(term);
             
             var defs = context.GetDefinitions();
             
@@ -277,21 +315,19 @@ namespace Core.Arango.Linq.Internal
                 query.AddDefinition(variable, definitionConvertable);
             }
 
-            context.GetDefinitions();
-
             return query;
         }
 
         private static AqlConvertable ParseDefinition(Expression expression, AqlParseQueryContext context)
         {
             ArangoQueryableContext<object> c = null;
-            var collection = new AqlCollection(true);
 
-            var visitor = new AqlCollectionExpressionParser(collection, context,true);
-            visitor.Parse(expression);
+            var visitor = new AqlCollectionExpressionParser(context,true);
+            var collection = visitor.Parse(expression);
             
             var param = Expression.Parameter(typeof(object), "x");
             collection.SetParameter(param);
+            collection.WithBrackets = true;
 
 
             return collection;
@@ -299,12 +335,22 @@ namespace Core.Arango.Linq.Internal
 
         public static AqlCollection ParseCollection(Expression collectionExpression, AqlParseQueryContext context)
         {
-            
-            var request = new AqlCollection();
 
-            var visitor = new AqlCollectionExpressionParser(request, context, true);
-            visitor.Parse(collectionExpression);
+            var oldStack = context.BuildStackElements.ToList();
+            context.BuildStackElements.Clear();
             
+            // var request = new AqlCollection();
+
+            var visitor = new AqlCollectionExpressionParser(context, true);
+            var request = visitor.Parse(collectionExpression);
+            // request.WithBrackets = true;
+
+            oldStack.Reverse();
+            foreach (var element in oldStack)
+            {
+                context.AddElementToBuildStack(element);
+            }
+
 
             return request;
         }
@@ -454,7 +500,7 @@ namespace Core.Arango.Linq.Internal
                         var hasFilter = node.Arguments.Count > 1;
                         var predicateExpression = (LambdaExpression) UnquoteExpression(node.Arguments[1]);
                         var parameter = predicateExpression.Parameters[0];
-
+                        
                         var collection = AqlExpressionConverter.ParseCollection(collectionExpression, _context);
                         
                         collection.SetParameter(parameter);
