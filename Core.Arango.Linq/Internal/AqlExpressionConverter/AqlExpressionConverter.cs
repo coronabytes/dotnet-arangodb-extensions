@@ -37,6 +37,33 @@ namespace Core.Arango.Linq.Internal
         public abstract string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars);
     }
 
+    public class AqlAggregate : AqlConvertable
+    {
+        public AqlConvertable AggregateBase { get; }
+        public string FunctionName { get; }
+        public ParameterExpression Parameter { get; }
+        public AqlConvertable Body { get; }
+
+        public AqlAggregate(AqlConvertable aggregateBase, string functionName, ParameterExpression parameter,
+            AqlConvertable body) : base(false)
+        {
+            AggregateBase = aggregateBase;
+            FunctionName = functionName;
+            Parameter = parameter;
+            Body = body;
+        }
+
+        public override AqlConvertable Accept(AqlVisitor visitor)
+        {
+            return visitor.VisitAggregate(this);
+        }
+
+        public override string Convert(Dictionary<string, string> parameters, AqlBindVarsPool bindVars)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class AqlSimpleSelect : AqlParseQueryContextBuildStackElement
     {
         public AqlConvertable Body { get; set; }
@@ -465,52 +492,72 @@ namespace Core.Arango.Linq.Internal
                     case "Max":
                     {
                         var inner = node.Arguments[0];
+                        
+                        var predicateExpression = (LambdaExpression) node.Arguments[1];
+                        
+                        var parameter = predicateExpression.Parameters[0];
 
                         var term = AqlExpressionConverter.ParseTerm(inner, _context);
                         
-                        var length = new AqlFunction("MAX", new []{ term });
+                        var body = AqlExpressionConverter.ParseTerm(predicateExpression.Body, _context);
+                        
+                        var aggr = new AqlAggregate(term, "MAX", parameter, body);
 
-
-                        _aqlConvertable = length;
+                        _aqlConvertable = aggr;
                         
                         return node;
                     }
                     case "Min":
                     {
                         var inner = node.Arguments[0];
+                        
+                        var predicateExpression = (LambdaExpression) node.Arguments[1];
+                        
+                        var parameter = predicateExpression.Parameters[0];
 
                         var term = AqlExpressionConverter.ParseTerm(inner, _context);
                         
-                        var length = new AqlFunction("MIN", new []{ term });
+                        var body = AqlExpressionConverter.ParseTerm(predicateExpression.Body, _context);
+                        
+                        var aggr = new AqlAggregate(term, "MIN", parameter, body);
 
-
-                        _aqlConvertable = length;
+                        _aqlConvertable = aggr;
                         
                         return node;
                     }
                     case "Average":
                     {
                         var inner = node.Arguments[0];
+                        
+                        var predicateExpression = (LambdaExpression) node.Arguments[1];
+                        
+                        var parameter = predicateExpression.Parameters[0];
 
                         var term = AqlExpressionConverter.ParseTerm(inner, _context);
                         
-                        var length = new AqlFunction("AVERAGE", new []{ term });
+                        var body = AqlExpressionConverter.ParseTerm(predicateExpression.Body, _context);
+                        
+                        var aggr = new AqlAggregate(term, "AVERAGE", parameter, body);
 
-
-                        _aqlConvertable = length;
+                        _aqlConvertable = aggr;
                         
                         return node;
                     }
                     case "Sum":
                     {
                         var inner = node.Arguments[0];
+                        
+                        var predicateExpression = (LambdaExpression) node.Arguments[1];
+                        
+                        var parameter = predicateExpression.Parameters[0];
 
                         var term = AqlExpressionConverter.ParseTerm(inner, _context);
                         
-                        var length = new AqlFunction("SUM", new []{ term });
+                        var body = AqlExpressionConverter.ParseTerm(predicateExpression.Body, _context);
+                        
+                        var aggr = new AqlAggregate(term, "SUM", parameter, body);
 
-
-                        _aqlConvertable = length;
+                        _aqlConvertable = aggr;
                         
                         return node;
                     }

@@ -218,12 +218,14 @@ COLLECT ageGroup = FLOOR(u.age / 5) * 5 INTO g
                 .GroupBy(x => new
                 {
                     x.ClientKey, ClientKey2 = x.ClientKey
-                }).Select(x => new
+                })
+                .Select(x => new
                 {
                     ClientKey = x.Key,
                     Max = x.Max(y => y.Value),
                     Min = x.Min(y => y.Value),
                     Avg = x.Average(y => y.Value),
+                    Avg2 = x.Average(k => k.Value),
                     Sum = x.Sum(y => y.Value),
                     Count = x.Count()
                 }).Where(x => x.Max < 2 && x.Count > 3)

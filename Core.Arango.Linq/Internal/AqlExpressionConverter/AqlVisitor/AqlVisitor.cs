@@ -211,5 +211,10 @@ namespace Core.Arango.Linq.Internal
             return proj;
 
         }
+
+        public virtual AqlConvertable VisitAggregate(AqlAggregate aqlAggregate)
+        {
+            return aqlAggregate;
+        }
     }
 }

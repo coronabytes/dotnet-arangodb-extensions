@@ -75,6 +75,30 @@ namespace Core.Arango.Linq.Internal
             return base.VisitParameter(node);
         }
 
+        public override AqlConvertable VisitAggregate(AqlAggregate node)
+        {
+            var groupParam = node.AggregateBase as AqlParameter;
+
+            if (groupParam != null && groupParam.Expr == GroupParameter)
+            {
+                var v = Context.MakeNewVariable("aggr" + node.FunctionName);
+            
+                var varTerm = new AqlVariable(v);
+                
+                var func = new AqlFunction(node.FunctionName, new AqlConvertable[] { node.Body });
+                
+                var aggr = new AqlGroupAggregate(varTerm, func, node.Parameter.Name);
+                
+                    
+                Group.AddAggregate(aggr);
+                return varTerm;
+            }
+            
+            
+            
+            return base.VisitAggregate(node);
+        }
+
         public override AqlConvertable VisitFunction(AqlFunction node)
         {
 
@@ -91,7 +115,9 @@ namespace Core.Arango.Linq.Internal
 
                     var aggrTerm = new AqlFunction(node.FunctionName, node.Arguments);
                     
-                    Group.AddAggregate(aggrTerm, varTerm);
+                    var aggr = new AqlGroupAggregate(varTerm, aggrTerm, GroupParameter.Name);
+                    
+                    Group.AddAggregate(aggr);
                     return varTerm;
                 }
             }
@@ -138,7 +164,21 @@ namespace Core.Arango.Linq.Internal
 
             return base.VisitMemberAccess(node);
         }
-    } 
+    }
+
+    public class AqlGroupAggregate
+    {
+        public AqlVariable Variable { get; }
+        public AqlConvertable Term { get; }
+        public string Parameter { get; }
+
+        public AqlGroupAggregate(AqlVariable variable, AqlConvertable term, string parameterName)
+        {
+            Variable = variable;
+            Term = term;
+            Parameter = parameterName;
+        }
+    }
     
     public class AqlGrouping : AqlConvertable, BuildStackConsumer, AqlParseQueryContextBuildStackElement
     {
@@ -146,7 +186,7 @@ namespace Core.Arango.Linq.Internal
         public string OuterParameter { get; private set; }
         public AqlSimpleSelect SelectBlock { get; private set; }
         
-        public Dictionary<AqlVariable, AqlConvertable> Aggregates = new Dictionary<AqlVariable, AqlConvertable>();
+        public List<AqlGroupAggregate> Aggregates = new List<AqlGroupAggregate>();
         
         public AqlQueryVariable GroupVariable { get; }
         
@@ -229,9 +269,9 @@ namespace Core.Arango.Linq.Internal
                 var convertedAggregates = new List<string>();
                 foreach (var aggr in Aggregates)
                 {
-                    var p = BaseParamsWith(SelectBlock.Parameter.Name, OuterParameter);
-                    var var = aggr.Key.Convert(p, bindVars, true);
-                    var val = aggr.Value.Convert(p, bindVars, true);
+                    var p = BaseParamsWith(aggr.Parameter, OuterParameter);
+                    var var = aggr.Variable.Convert(p, bindVars, true);
+                    var val = aggr.Term.Convert(p, bindVars, true);
                     var setter = $"{var} = {val}";
                     convertedAggregates.Add(setter);
                 }
@@ -251,9 +291,9 @@ namespace Core.Arango.Linq.Internal
             return sb.ToString();
         }
         
-        public void AddAggregate(AqlConvertable term, AqlVariable var)
+        public void AddAggregate(AqlGroupAggregate aggr)
         {
-            this.Aggregates.Add(var, term);
+            this.Aggregates.Add(aggr);
         }
 
         public void ConsumeFilter(AqlFilter filter)
