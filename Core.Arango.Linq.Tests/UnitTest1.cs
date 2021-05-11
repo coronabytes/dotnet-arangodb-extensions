@@ -294,6 +294,17 @@ namespace Core.Arango.Linq.Tests
 
             Assert.True(test[0].Value == 1);
         }
+        
+        
+        [Fact]
+        public void TestProjection()
+        {
+            var test = Arango.AsQueryable<Project>("test")
+                .Select(x => new {a = x.Name, b = x.Value})
+                .ToList();
+
+            Assert.True(test[0].b == 1);
+        }
 
         /// <summary>
         /// Checks if Take is correctly applied
@@ -357,7 +368,7 @@ namespace Core.Arango.Linq.Tests
             var test3 = Arango
                 .AsQueryable<Project>("test")
                 .Where(x => x.Name.Length < 3)
-                .GroupBy(x => new {key = x.ClientKey, x.ProjectType})
+                .GroupBy(m => new {key = m.ClientKey, m.ProjectType})
                 .Select(k => new
                 {
                     ClientKey = k.Key.key,

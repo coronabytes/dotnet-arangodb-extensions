@@ -77,23 +77,24 @@ namespace Core.Arango.Linq.Internal
 
         public override AqlConvertable VisitFunction(AqlFunction node)
         {
-            if (node.FunctionName == "LENGTH" && node.Arguments.Length > 0)
+
+            var aggregateTransformations = new string[] { "LENGTH", "MAX", "MIN", "AVERAGE", "SUM"};
+            
+            if (aggregateTransformations.Contains(node.FunctionName) && node.Arguments.Length > 0)
             {
                 var groupParam = node.Arguments[0] as AqlParameter;
                 if (groupParam.Expr == GroupParameter)
                 {
                     
-                    var v = Context.MakeNewVariable("aggr");
+                    var v = Context.MakeNewVariable("aggr" + node.FunctionName);
                     var varTerm = new AqlVariable(v);
 
-                    var aggrTerm = new AqlFunction("LENGTH", new []{ new AqlPrimitive("1") });
+                    var aggrTerm = new AqlFunction(node.FunctionName, node.Arguments);
                     
                     Group.AddAggregate(aggrTerm, varTerm);
                     return varTerm;
                 }
             }
-             
-            
             
             return base.VisitFunction(node);
         }
@@ -101,19 +102,40 @@ namespace Core.Arango.Linq.Internal
 
         public override AqlConvertable VisitMemberAccess(AqlMemberAccess node)
         {
-            var key = node.Left as AqlMemberAccess;
-            var groupParam = key?.Left as AqlParameter;
 
-            if (key != null && groupParam != null && key.Member == "_key" && groupParam.Expr == GroupParameter)
+            // full key access
             {
-                var v = Group.KeyProjection.GetMembers()
-                    .Where(x => x.Member == node.Member)
-                    .Select(x => x.Variable).Single();
-                
-                return new AqlVariable(v);
+                var groupParam = node.Left as AqlParameter;
+                if (groupParam != null && node.Member == "_key" && groupParam.Expr == GroupParameter)
+                {
+                    var proj = new AqlObjectProjection();
+
+                    foreach (var m in Group.KeyProjection.GetMembers())
+                    {
+                        proj.AddMember(m.Member, new AqlVariable(m.Variable));
+                    }
+                    return proj;
+
+                    // proj.AddMember();
+                }
             }
-            
-            
+
+
+            {
+                var key = node.Left as AqlMemberAccess;
+                var groupParam = key?.Left as AqlParameter;
+
+                if (key != null && groupParam != null && key.Member == "_key" && groupParam.Expr == GroupParameter)
+                {
+                    var v = Group.KeyProjection.GetMembers()
+                        .Where(x => x.Member == node.Member)
+                        .Select(x => x.Variable).Single();
+
+                    return new AqlVariable(v);
+                }
+            }
+
+
             return base.VisitMemberAccess(node);
         }
     } 
@@ -201,15 +223,13 @@ namespace Core.Arango.Linq.Internal
             
             
             sb.AppendLine($"COLLECT {keysString}");
-            if (loadWholeCollection)
-                sb.AppendLine($"INTO {groupVar}");
-
+            
             if (this.Aggregates.Any())
             {
                 var convertedAggregates = new List<string>();
                 foreach (var aggr in Aggregates)
                 {
-                    var p = BaseParamsWith(KeyProjection.Parameter, OuterParameter);
+                    var p = BaseParamsWith(SelectBlock.Parameter.Name, OuterParameter);
                     var var = aggr.Key.Convert(p, bindVars, true);
                     var val = aggr.Value.Convert(p, bindVars, true);
                     var setter = $"{var} = {val}";
@@ -218,6 +238,8 @@ namespace Core.Arango.Linq.Internal
                 var aggrStr = String.Join(", ", convertedAggregates);
                 sb.AppendLine($"AGGREGATE {aggrStr}");
             }
+            if (loadWholeCollection)
+                sb.AppendLine($"INTO {groupVar}");
 
 
             sb.AppendLine($"RETURN {selectString}");
@@ -265,6 +287,11 @@ namespace Core.Arango.Linq.Internal
         }
 
         public void ConsumeOutputBehaviour(AqlOutputBehaviour aqlOutputBehaviour)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ConsumeDistinct(AqlDistinctElement aqlDistinctElement)
         {
             throw new NotImplementedException();
         }

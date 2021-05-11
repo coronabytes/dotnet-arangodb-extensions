@@ -194,9 +194,9 @@ namespace Core.Arango.Linq.Internal
             return aqlConcat;
         }
 
-        public virtual AqlConvertable VisitReturnObjectProjection(AqlReturnObjectProjection proj)
+        public virtual AqlConvertable VisitReturnObjectProjection(AqlObjectProjection proj)
         {
-            var c = new AqlReturnObjectProjection();
+            var c = new AqlObjectProjection();
 
             foreach (var m in proj.MemberDict)
             {

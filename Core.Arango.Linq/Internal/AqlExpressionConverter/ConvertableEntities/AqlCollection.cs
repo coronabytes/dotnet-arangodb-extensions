@@ -79,6 +79,15 @@ namespace Core.Arango.Linq.Internal
                 
                 switch (node.Method.Name)
                 {
+                    case "Distinct":
+                    {
+                        var d = new AqlDistinctElement();
+                        
+                        _context.AddElementToBuildStack(d);
+                        
+                        var inner = node.Arguments[0];
+                        return ParseLayer(node.Arguments[0]);
+                    }
                     case "SingleOrDefault":
                     {
                         var b = new AqlOutputBehaviour(AqlQueryOutputBehaviour.SingleOrDefault);
@@ -195,7 +204,7 @@ namespace Core.Arango.Linq.Internal
                             {
                                 var expr = (NewExpression) selectLambda.Body;
 
-                                var proj = new AqlReturnObjectProjection();
+                                var proj = new AqlObjectProjection();
 
                                 for (var i = 0; i < expr.Members.Count; i++)
                                 {
@@ -210,7 +219,7 @@ namespace Core.Arango.Linq.Internal
                             {
                                 var init = (MemberInitExpression) selectLambda.Body;
 
-                                var proj = new AqlReturnObjectProjection();
+                                var proj = new AqlObjectProjection();
 
                                 foreach (var binding in init.Bindings)
                                 {
@@ -391,7 +400,8 @@ namespace Core.Arango.Linq.Internal
 
         public List<AqlFilter> FilterBlocks { get; set; } = new List<AqlFilter>();
         public AqlConvertable Collection { get; set; }
-
+        
+        public bool DistinctResult { get; set; }
 
         public AqlCollection(bool withBrackets = true) : base(true)
         {
@@ -467,18 +477,32 @@ namespace Core.Arango.Linq.Internal
                 var groupingStr = Grouping.Convert(parameters, bindVars);
                 sb.AppendLine($"{groupingStr}");
             }
-            else if (SelectBlock != null)
-            {
-                var selectString = SelectBlock.Body.Convert(
-                    BaseParamsWith(SelectBlock.Parameter.Name, projectionVarLabel),
-                    bindVars
-                );
-                sb.AppendLine($"RETURN {selectString}");
-            }
             else
             {
-                sb.AppendLine($"RETURN {projectionVarLabel}");
+                string returnValue;
+                if (SelectBlock != null)
+                {
+                    var selectString = SelectBlock.Body.Convert(
+                        BaseParamsWith(SelectBlock.Parameter.Name, projectionVarLabel),
+                        bindVars
+                    );
+                    returnValue = selectString;
+                }
+                else
+                {
+                    returnValue = projectionVarLabel;
+                    
+                }
+
+                if (DistinctResult)
+                {
+                    returnValue = $"DISTINCT ({returnValue})";
+                }
+                
+                sb.AppendLine($"RETURN {returnValue}");
             }
+
+            
 
             if (WithBrackets)
                 sb.AppendLine(")");
@@ -540,6 +564,13 @@ namespace Core.Arango.Linq.Internal
         {
             this.OutputBehaviour = aqlOutputBehaviour.Behaviour;
         }
+
+        public void ConsumeDistinct(AqlDistinctElement aqlDistinctElement)
+        {
+            this.DistinctResult = true;
+        }
+
+        
 
         private void SetGrouping(AqlGrouping aqlGrouping)
         {

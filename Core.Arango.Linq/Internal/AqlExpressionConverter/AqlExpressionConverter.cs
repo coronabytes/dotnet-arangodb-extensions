@@ -54,6 +54,14 @@ namespace Core.Arango.Linq.Internal
         }
     }
 
+    public class AqlDistinctElement : AqlParseQueryContextBuildStackElement
+    {
+        public void FeedToConsumer(BuildStackConsumer consumer)
+        {
+            consumer.ConsumeDistinct(this);
+        }
+    }
+    
     public class AqlOutputBehaviour : AqlParseQueryContextBuildStackElement
     {
         public AqlQueryOutputBehaviour Behaviour { get; }
@@ -196,6 +204,7 @@ namespace Core.Arango.Linq.Internal
         void ConsumeSort(AqlSort aqlSort);
         void ConsumeLimit(AqlLimit aqlLimit);
         void ConsumeOutputBehaviour(AqlOutputBehaviour aqlOutputBehaviour);
+        void ConsumeDistinct(AqlDistinctElement aqlDistinctElement);
     }
     
     public class AqlParseQueryContext
@@ -447,6 +456,58 @@ namespace Core.Arango.Linq.Internal
                         var term = AqlExpressionConverter.ParseTerm(inner, _context);
                         
                         var length = new AqlFunction("LENGTH", new []{ term });
+
+
+                        _aqlConvertable = length;
+                        
+                        return node;
+                    }
+                    case "Max":
+                    {
+                        var inner = node.Arguments[0];
+
+                        var term = AqlExpressionConverter.ParseTerm(inner, _context);
+                        
+                        var length = new AqlFunction("MAX", new []{ term });
+
+
+                        _aqlConvertable = length;
+                        
+                        return node;
+                    }
+                    case "Min":
+                    {
+                        var inner = node.Arguments[0];
+
+                        var term = AqlExpressionConverter.ParseTerm(inner, _context);
+                        
+                        var length = new AqlFunction("MIN", new []{ term });
+
+
+                        _aqlConvertable = length;
+                        
+                        return node;
+                    }
+                    case "Average":
+                    {
+                        var inner = node.Arguments[0];
+
+                        var term = AqlExpressionConverter.ParseTerm(inner, _context);
+                        
+                        var length = new AqlFunction("AVERAGE", new []{ term });
+
+
+                        _aqlConvertable = length;
+                        
+                        return node;
+                    }
+                    case "Sum":
+                    {
+                        var inner = node.Arguments[0];
+
+                        var term = AqlExpressionConverter.ParseTerm(inner, _context);
+                        
+                        var length = new AqlFunction("SUM", new []{ term });
 
 
                         _aqlConvertable = length;
@@ -759,17 +820,17 @@ namespace Core.Arango.Linq.Internal
         }
     }
 
-    public class AqlReturnObjectProjection : AqlConvertable
+    public class AqlObjectProjection : AqlConvertable
     {
         public Dictionary<string, AqlConvertable> MemberDict { get; } = new Dictionary<string, AqlConvertable>();
 
-        public bool Equals(AqlReturnObjectProjection other)
+        public bool Equals(AqlObjectProjection other)
         {
             return other != null
                    && this.MemberDict.SequenceEqual(other.MemberDict);
         }
 
-        public AqlReturnObjectProjection() : base(false)
+        public AqlObjectProjection() : base(false)
         {
         }
 
