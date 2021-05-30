@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Core.Arango" Version="3.8.102" />
+    <PackageReference Include="Core.Arango" Version="3.8.200" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
