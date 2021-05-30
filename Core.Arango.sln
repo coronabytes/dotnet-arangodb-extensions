@@ -11,13 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.DataProtection"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.DevExtreme.Tests", "Core.Arango.DevExtreme.Tests\Core.Arango.DevExtreme.Tests.csproj", "{2383D16C-D2FB-4B7F-9F47-EDFE475D06C8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Linq", "Core.Arango.Linq\Core.Arango.Linq.csproj", "{A9ECCC9A-9E2C-43AF-BEE5-104E6D798D07}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Migration", "Core.Arango.Migration\Core.Arango.Migration.csproj", "{84E08E81-C755-4EB7-BB9B-C35B6E1E6C93}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Linq.Tests", "Core.Arango.Linq.Tests\Core.Arango.Linq.Tests.csproj", "{795C024E-C730-48AD-8E7F-FE008D3D1055}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Arango.Migration", "Core.Arango.Migration\Core.Arango.Migration.csproj", "{84E08E81-C755-4EB7-BB9B-C35B6E1E6C93}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Arango.Migration.Tests", "Core.Arango.Migration.Tests\Core.Arango.Migration.Tests.csproj", "{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Migration.Tests", "Core.Arango.Migration.Tests\Core.Arango.Migration.Tests.csproj", "{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,14 +37,6 @@ Global
 		{2383D16C-D2FB-4B7F-9F47-EDFE475D06C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2383D16C-D2FB-4B7F-9F47-EDFE475D06C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2383D16C-D2FB-4B7F-9F47-EDFE475D06C8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A9ECCC9A-9E2C-43AF-BEE5-104E6D798D07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A9ECCC9A-9E2C-43AF-BEE5-104E6D798D07}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A9ECCC9A-9E2C-43AF-BEE5-104E6D798D07}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A9ECCC9A-9E2C-43AF-BEE5-104E6D798D07}.Release|Any CPU.Build.0 = Release|Any CPU
-		{795C024E-C730-48AD-8E7F-FE008D3D1055}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{795C024E-C730-48AD-8E7F-FE008D3D1055}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{795C024E-C730-48AD-8E7F-FE008D3D1055}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{795C024E-C730-48AD-8E7F-FE008D3D1055}.Release|Any CPU.Build.0 = Release|Any CPU
 		{84E08E81-C755-4EB7-BB9B-C35B6E1E6C93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{84E08E81-C755-4EB7-BB9B-C35B6E1E6C93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84E08E81-C755-4EB7-BB9B-C35B6E1E6C93}.Release|Any CPU.ActiveCfg = Release|Any CPU
