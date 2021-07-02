@@ -29,6 +29,77 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
+        public async Task Migrate2X()
+        {
+            var migrator = new ArangoMigrator(Arango);
+            await migrator.ApplyStructureAsync("test", new ArangoStructure
+            {
+                Collections = new List<ArangoCollectionIndices>
+                {
+                    new ()
+                    {
+                        Collection = new ArangoCollection
+                        {
+                            Name = "MarketData",
+                            KeyOptions = new ArangoKeyOptions
+                            {
+                                Type = ArangoKeyType.Padded
+                            }
+                        },
+                        Indices = new List<ArangoIndex>
+                        {
+                            new ()
+                            {
+                                Name = "IDX_Symbol",
+                                Type = ArangoIndexType.Hash,
+                                Fields = new List<string> {"S"}
+                            },
+                            new ()
+                            {
+                                Name = "IDX_Time",
+                                Type = ArangoIndexType.Skiplist,
+                                Fields = new List<string> {"T"}
+                            }
+                        }
+                    }
+                }
+            });
+
+            await migrator.ApplyStructureAsync("test", new ArangoStructure
+            {
+                Collections = new List<ArangoCollectionIndices>
+                {
+                    new ()
+                    {
+                        Collection = new ArangoCollection
+                        {
+                            Name = "MarketData",
+                            KeyOptions = new ArangoKeyOptions
+                            {
+                                Type = ArangoKeyType.Padded
+                            }
+                        },
+                        Indices = new List<ArangoIndex>
+                        {
+                            new ()
+                            {
+                                Name = "IDX_Symbol",
+                                Type = ArangoIndexType.Hash,
+                                Fields = new List<string> {"S"}
+                            },
+                            new ()
+                            {
+                                Name = "IDX_Time",
+                                Type = ArangoIndexType.Skiplist,
+                                Fields = new List<string> {"T"}
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        [Fact]
         public async Task Compare()
         {
             const string source = "96b02ae6-bda4-43e2-b83e-28293913ddb5";

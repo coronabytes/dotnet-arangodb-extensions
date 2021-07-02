@@ -238,29 +238,40 @@ namespace Core.Arango.Migration
                             if (!options.DryRun)
                                 await _arango.Index.CreateAsync(db, targetCollection.Collection.Name, targetIndex);
                         }
-                        else if (!Compare(currentIndex, targetIndex))
-                        {
-                            options.Notify?.Invoke(new ArangoMigrationNotification
-                            {
-                                Object = ArangoMigrationObject.Index,
-                                State = ArangoMigrationState.Update,
-                                Name = targetIndex.Name
-                            });
-
-                            if (!options.DryRun)
-                            {
-                                await _arango.Index.DropAsync(db, targetIndex.Name);
-                                await _arango.Index.CreateAsync(db, targetCollection.Collection.Name, targetIndex);
-                            }
-                        }
                         else
                         {
-                            options.Notify?.Invoke(new ArangoMigrationNotification
+                            if (!targetIndex.Deduplicate.HasValue)
+                                targetIndex.Deduplicate = true;
+                            if (!targetIndex.Sparse.HasValue)
+                                targetIndex.Sparse = false;
+                            if (!targetIndex.Unique.HasValue)
+                                targetIndex.Unique = false;
+
+                            if (!Compare(currentIndex, targetIndex))
                             {
-                                Object = ArangoMigrationObject.Index,
-                                State = ArangoMigrationState.Identical,
-                                Name = targetIndex.Name
-                            });
+                                options.Notify?.Invoke(new ArangoMigrationNotification
+                                {
+                                    Object = ArangoMigrationObject.Index,
+                                    State = ArangoMigrationState.Update,
+                                    Name = targetIndex.Name
+                                });
+
+                                if (!options.DryRun)
+                                {
+                                    await _arango.Index.DropAsync(db,
+                                        targetCollection.Collection.Name + "/" + targetIndex.Name);
+                                    await _arango.Index.CreateAsync(db, targetCollection.Collection.Name, targetIndex);
+                                }
+                            }
+                            else
+                            {
+                                options.Notify?.Invoke(new ArangoMigrationNotification
+                                {
+                                    Object = ArangoMigrationObject.Index,
+                                    State = ArangoMigrationState.Identical,
+                                    Name = targetIndex.Name
+                                });
+                            }
                         }
                     }
                 }
