@@ -36,7 +36,14 @@ namespace Core.Arango.Serilog
                     _arango.Database.CreateAsync(_database).Wait();
 
                 if (!_arango.Collection.ExistAsync(_database, collection).Result)
-                    _arango.Collection.CreateAsync(_database, _collection, ArangoCollectionType.Document).Wait();
+                    _arango.Collection.CreateAsync(_database, new ArangoCollection
+                    {
+                        Name = _collection,
+                        KeyOptions = new ArangoKeyOptions
+                        {
+                            Type = ArangoKeyType.Padded
+                        }
+                    }).Wait();
             }
             catch (Exception)
             {
