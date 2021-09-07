@@ -68,10 +68,19 @@ namespace Core.Arango.DevExtreme
                 queryBuilder.AppendLine(_settings.Preamble);
 
             queryBuilder.AppendLine($"FOR {_settings.IteratorVar} IN {collection}");
+            
+            if (!string.IsNullOrWhiteSpace(_settings.PreFilter))
+                queryBuilder.AppendLine(_settings.PreFilter);
+
             queryBuilder.AppendLine("FILTER " + FilterExpression);
 
             if (_settings.Filter != null)
                 queryBuilder.AppendLine(" && " + _settings.Filter);
+
+            
+            if (!string.IsNullOrWhiteSpace(_settings.PostFilter))
+                queryBuilder.AppendLine(_settings.PostFilter);
+
 
             if (HasGrouping)
             {
@@ -292,29 +301,41 @@ namespace Core.Arango.DevExtreme
                         {
                             var selector = _settings.ValidPropertyName(g.Selector).FirstCharOfPropertiesToUpper();
 
-                            var selectorRight = selector;
+                            var selectorRight = _settings?.PropertyTransform != null ? _settings.PropertyTransform(selector, _settings) : $"{_settings.IteratorVar}.{selector}";
                             var selectorLeft = selector.Replace(".", "");
 
                             if (g.GroupInterval == "year")
                             {
                                 Groups.Add($"YEAR{selectorLeft}");
-                                return $"YEAR{selectorLeft} = DATE_YEAR({_settings.IteratorVar}.{selectorRight})";
+                                return $"YEAR{selectorLeft} = DATE_YEAR({selectorRight})";
                             }
 
                             if (g.GroupInterval == "month")
                             {
                                 Groups.Add($"MONTH{selectorLeft}");
-                                return $"MONTH{selectorLeft} = DATE_MONTH({_settings.IteratorVar}.{selectorRight})";
+                                return $"MONTH{selectorLeft} = DATE_MONTH({selectorRight})";
                             }
 
                             if (g.GroupInterval == "day")
                             {
                                 Groups.Add($"DAY{selectorLeft}");
-                                return $"DAY{selectorLeft} = DATE_DAY({_settings.IteratorVar}.{selectorRight})";
+                                return $"DAY{selectorLeft} = DATE_DAY({selectorRight})";
+                            }
+
+                            if (g.GroupInterval == "hour")
+                            {
+                                Groups.Add($"HOUR{selectorLeft}");
+                                return $"DAY{selectorLeft} = DATE_HOUR({selectorRight})";
+                            }
+
+                            if (g.GroupInterval == "minute")
+                            {
+                                Groups.Add($"MINUTE{selectorLeft}");
+                                return $"MINUTE{selectorLeft} = DATE_MINUTE({selectorRight})";
                             }
 
                             Groups.Add(selectorLeft);
-                            return $"{selectorLeft} = {_settings.IteratorVar}.{selectorRight}";
+                            return $"{selectorLeft} = {selectorRight}";
                         }).ToList();
 
                     sb.AppendLine(string.Join(", ", groups));

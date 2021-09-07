@@ -40,6 +40,16 @@ namespace Core.Arango.DevExtreme
         public string Key { get; set; } = "key";
 
         /// <summary>
+        ///     Prepend filter clause - no bindvars through string interpolation
+        /// </summary>
+        public string PreFilter { get; set; }
+
+        /// <summary>
+        ///     injected after the filter clause - no bindvars through string interpolation
+        /// </summary>
+        public string PostFilter { get; set; }
+
+        /// <summary>
         ///     Prepend query with this script - no bindvars through string interpolation
         /// </summary>
         public string Preamble { get; set; }
