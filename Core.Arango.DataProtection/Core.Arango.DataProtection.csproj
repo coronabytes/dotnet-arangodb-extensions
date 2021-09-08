@@ -25,8 +25,8 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Core.Arango" Version="3.8.202" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="5.0.8" />
+    <PackageReference Include="Core.Arango" Version="3.8.212" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="5.0.9" />
   </ItemGroup>
 
   <ItemGroup>
