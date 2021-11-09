@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net5.0;net6.0</TargetFrameworks>
     <Copyright>Andreas Dominik Jung</Copyright>
     <Authors>Andreas Dominik Jung</Authors>
     <Company>Corona Bytes</Company>
@@ -22,12 +22,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <PackageReference Include="Core.Arango" Version="3.8.400" />
-    <PackageReference Include="DevExtreme.AspNet.Data" Version="2.8.6" />
+	<PackageReference Include="Core.Arango" Version="3.8.400" />
+	<PackageReference Include="DevExtreme.AspNet.Data" Version="2.8.6" />
   </ItemGroup>
 
   <ItemGroup>
