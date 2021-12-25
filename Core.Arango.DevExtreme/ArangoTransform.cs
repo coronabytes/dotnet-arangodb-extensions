@@ -35,7 +35,10 @@ namespace Core.Arango.DevExtreme
                 loadOption.Take = settings.MaxTake;
         }
 
+        
         public bool HasGrouping { get; }
+        public SummaryInfo[] MergedGroupSummary { get; set; }
+        public SummaryInfo[] MergedTotalSummary { get; set; }
         public Dictionary<string, object> Parameter { get; } = new Dictionary<string, object>();
         public string FilterExpression { get; private set; }
         public string SortExpression { get; private set; }
@@ -166,9 +169,9 @@ namespace Core.Arango.DevExtreme
                 #region preprocess
 
                 // Find equal groups and merge them
-                if (_loadOption.GroupSummary != null)
+                if (_loadOption.GroupSummary?.Any() == true)
                 {
-                    _loadOption.GroupSummary = _loadOption.GroupSummary
+                    MergedGroupSummary = _loadOption.GroupSummary
                         .GroupBy(x => new { x.Selector, x.SummaryType }, x => new SummaryInfo()
                         {
                             Selector = x.Selector,
@@ -180,9 +183,9 @@ namespace Core.Arango.DevExtreme
 
                 }
 
-                if (_loadOption.TotalSummary != null)
+                if (_loadOption.TotalSummary?.Any() == true)
                 {
-                    _loadOption.TotalSummary = _loadOption.TotalSummary
+                    MergedTotalSummary = _loadOption.TotalSummary
                         .GroupBy(x => new { x.Selector, x.SummaryType }, x => new SummaryInfo()
                         {
                             Selector = x.Selector,
@@ -208,15 +211,15 @@ namespace Core.Arango.DevExtreme
                     return false;
                 }
 
-                if (_loadOption.TotalSummary?.Length > _settings.MaxSummary)
+                if (MergedTotalSummary?.Length > _settings.MaxSummary)
                 {
-                    error = $"max total summaries of {_settings.MaxSummary} exceeded";
+                    error = $"max (merged) total summaries of {_settings.MaxSummary} exceeded";
                     return false;
                 }
 
-                if (_loadOption.GroupSummary?.Length > _settings.MaxSummary)
+                if (MergedGroupSummary?.Length > _settings.MaxSummary)
                 {
-                    error = $"max group summaries of {_settings.MaxSummary} exceeded";
+                    error = $"max (merged) group summaries of {_settings.MaxSummary} exceeded";
                     return false;
                 }
 
@@ -410,7 +413,7 @@ namespace Core.Arango.DevExtreme
 
 
                 sb.AppendLine("AGGREGATE");
-                sb.AppendLine(string.Join(", ", aggregates));
+                sb.AppendLine(string.Join(", ", aggregates.Distinct()));
 
                 var projection = new List<string> {"TotalCount"};
 
@@ -426,7 +429,7 @@ namespace Core.Arango.DevExtreme
                         if (g != null) projection.Add($"{g}_DV: {glookup.Value}");
                     }
 
-                foreach (var summary in Summaries)
+                foreach (var summary in Summaries.Distinct())
                     projection.Add(summary);
 
                 if (_loadOption.Group?.Any() == true)
