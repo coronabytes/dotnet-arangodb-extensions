@@ -166,24 +166,33 @@ namespace Core.Arango.DevExtreme
                 #region preprocess
 
                 // Find equal groups and merge them
-                _loadOption.GroupSummary = _loadOption.GroupSummary
-                    .GroupBy(x => new { x.Selector, x.SummaryType }, x => new SummaryInfo()
-                    {
-                        Selector = x.Selector,
-                        SummaryType = x.SummaryType
-                    })
-                    .Select(x => x.First())
-                    .ToArray();
+                if (_loadOption.GroupSummary != null)
+                {
+                    _loadOption.GroupSummary = _loadOption.GroupSummary
+                        .GroupBy(x => new { x.Selector, x.SummaryType }, x => new SummaryInfo()
+                        {
+                            Selector = x.Selector,
+                            SummaryType = x.SummaryType
+                        })
+                        .Select(x => x.First())
+                        .ToArray();
 
-                _loadOption.TotalSummary = _loadOption.TotalSummary
-                    .GroupBy(x => new { x.Selector, x.SummaryType }, x => new SummaryInfo()
-                    {
-                        Selector = x.Selector,
-                        SummaryType = x.SummaryType
-                    })
-                    .Select(x => x.First())
-                    .ToArray();
 
+                }
+
+                if (_loadOption.TotalSummary != null)
+                {
+                    _loadOption.TotalSummary = _loadOption.TotalSummary
+                        .GroupBy(x => new { x.Selector, x.SummaryType }, x => new SummaryInfo()
+                        {
+                            Selector = x.Selector,
+                            SummaryType = x.SummaryType
+                        })
+                        .Select(x => x.First())
+                        .ToArray();
+
+                }
+         
                 #endregion
 
                 // TODO: Recursive
