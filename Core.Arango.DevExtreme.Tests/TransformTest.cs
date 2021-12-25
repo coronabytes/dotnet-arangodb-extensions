@@ -122,6 +122,11 @@ namespace Core.Arango.DevExtreme.Tests
                     },
                     new SummaryInfo
                     {
+                        Selector = "duration",
+                        SummaryType = "sum"
+                    },
+                    new SummaryInfo
+                    {
                         Selector = "revenue",
                         SummaryType = "sum"
                     }
