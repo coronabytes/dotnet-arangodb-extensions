@@ -20,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Core.Arango" Version="3.8.400" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Core.Arango" Version="3.9.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
@@ -29,11 +29,11 @@
   </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-   <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.0" />
+   <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.2" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.2" />
   </ItemGroup>
 
   <ItemGroup>
