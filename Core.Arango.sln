@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.156
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Serilog", "Core.Arango.Serilog\Core.Arango.Serilog.csproj", "{B91A1E6C-FAF0-4632-9098-11AD2BE53221}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Migration", "Core.Arango.Migration\Core.Arango.Migration.csproj", "{84E08E81-C755-4EB7-BB9B-C35B6E1E6C93}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Migration.Tests", "Core.Arango.Migration.Tests\Core.Arango.Migration.Tests.csproj", "{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Arango.DevExtreme.Sandbox", "Core.Arango.DevExtreme.Sandbox\Core.Arango.DevExtreme.Sandbox.csproj", "{0AF633C8-6324-4477-BFE4-BCF89D30426E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AF633C8-6324-4477-BFE4-BCF89D30426E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AF633C8-6324-4477-BFE4-BCF89D30426E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AF633C8-6324-4477-BFE4-BCF89D30426E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AF633C8-6324-4477-BFE4-BCF89D30426E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
