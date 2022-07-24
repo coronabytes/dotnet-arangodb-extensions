@@ -12,7 +12,7 @@ namespace Core.Arango.DevExtreme.Sandbox.Controllers
     }
 
     [ApiController]
-    [Route("devex")]
+    [Route("api/grid")]
     public class DevExController : ControllerBase
     {
         private static readonly List<Project> _projects = new()
@@ -53,7 +53,7 @@ namespace Core.Arango.DevExtreme.Sandbox.Controllers
 
             at.Transform(out var error);
 
-            return new LoadResult();
+            return DataSourceLoader.Load(_projects.AsQueryable(), loadOptions);
         }
     }
 }

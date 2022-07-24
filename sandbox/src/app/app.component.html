@@ -1,0 +1,7 @@
+<dx-data-grid keyExpr="id" [showBorders]="true" [dataSource]="dataSource" [remoteOperations]="true">
+  <dxo-header-filter [visible]="true">
+
+  </dxo-header-filter>
+  <dxi-column dataField="name" dataType="string"></dxi-column>
+  <dxi-column dataField="category" [allowHeaderFiltering]="true" dataType="string"></dxi-column>
+</dx-data-grid>
