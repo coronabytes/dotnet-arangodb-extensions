@@ -111,9 +111,14 @@ namespace Core.Arango.DevExtreme
                 var res = await arango.Query.ExecuteAsync<JObject>(handle, query, Parameter,
                     cancellationToken: cancellationToken);
 
+                var groupData = BuildGrouping(this, res);
+
                 return new DxLoadResult
                 {
-                    Data = BuildGrouping(this, res)
+                    Data = groupData,
+                    // Experimental
+                    TotalCount = _loadOption.RequireTotalCount ? groupData.Sum(x=> x.Count ?? 0) : -1,
+                    GroupCount = _loadOption.RequireGroupCount ? groupData.Count : -1,
                 };
             }
             else
@@ -154,7 +159,7 @@ namespace Core.Arango.DevExtreme
                 {
                     Data = res,
                     Summary = summary,
-                    TotalCount = res.FullCount ?? -1
+                    TotalCount = res.FullCount ?? -1,
                 };
             }
         }
