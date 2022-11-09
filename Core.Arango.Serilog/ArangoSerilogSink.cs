@@ -10,10 +10,8 @@ using Serilog.Sinks.PeriodicBatching;
 
 namespace Core.Arango.Serilog
 {
-    public class ArangoSerilogSink : PeriodicBatchingSink
+    public class ArangoSerilogSink : IBatchedLogEventSink
     {
-        public const int DefaultBatchPostingLimit = 50;
-        public static readonly TimeSpan DefaultPeriod = TimeSpan.FromSeconds(2);
         private readonly IArangoContext _arango;
         private readonly string _collection;
         private readonly string _database;
@@ -21,10 +19,7 @@ namespace Core.Arango.Serilog
         public ArangoSerilogSink(
             IArangoContext arango,
             string database = "logs",
-            string collection = "logs",
-            int batchPostingLimit = DefaultBatchPostingLimit,
-            TimeSpan? period = null)
-            : base(batchPostingLimit, period ?? DefaultPeriod)
+            string collection = "logs")
         {
             _arango = arango;
             _database = database;
@@ -51,7 +46,7 @@ namespace Core.Arango.Serilog
             }
         }
 
-        protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
+        public async Task EmitBatchAsync(IEnumerable<LogEvent> events)
         {
             try
             {
@@ -69,6 +64,11 @@ namespace Core.Arango.Serilog
             {
                 //
             }
+        }
+
+        public Task OnEmptyBatchAsync()
+        {
+            return Task.CompletedTask;
         }
 
         public class LogEventEntity
