@@ -21,13 +21,13 @@ jobs:
           - "arangodb:3.10"
           - "arangodb:3.9"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     
     - name: ArangoDB ${{ matrix.arango }}
       run: docker run -d --rm -e ARANGO_ROOT_PASSWORD= -p 8529:8529 ${{ matrix.arango }}
     
     - name: Setup .NET ${{ matrix.dotnet }}
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ matrix.dotnet }}
     
