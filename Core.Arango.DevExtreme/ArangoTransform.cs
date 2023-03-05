@@ -466,7 +466,7 @@ namespace Core.Arango.DevExtreme
                 return "SORT " + string.Join(", ",
                     groups.Select(x =>
                     {
-                        var prop = _settings.ValidPropertyName(x.Selector).FirstCharOfPropertiesToUpper();
+                        var prop = PropertyName(_settings.ValidPropertyName(x.Selector).FirstCharOfPropertiesToUpper());
 
                         if (!string.IsNullOrWhiteSpace(x.GroupInterval))
                             prop = x.GroupInterval.ToUpperInvariant() + prop;
