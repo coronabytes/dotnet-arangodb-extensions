@@ -343,7 +343,7 @@ namespace Core.Arango.DevExtreme
                     var groups = _loadOption.Group.Where(x => x.GroupInterval != "hour" && x.GroupInterval != "minute")
                         .Select(g =>
                         {
-                            var selector = _settings.ValidPropertyName(g.Selector).FirstCharOfPropertiesToUpper();
+                            var selector = PropertyName(_settings.ValidPropertyName(g.Selector).FirstCharOfPropertiesToUpper(), string.Empty);
 
                             var selectorRight = _settings?.PropertyTransform != null ? _settings.PropertyTransform(selector, _settings) : $"{_settings.IteratorVar}.{selector}";
                             var selectorLeft = selector.Replace(".", "");
@@ -466,7 +466,7 @@ namespace Core.Arango.DevExtreme
                 return "SORT " + string.Join(", ",
                     groups.Select(x =>
                     {
-                        var prop = PropertyName(_settings.ValidPropertyName(x.Selector).FirstCharOfPropertiesToUpper());
+                        var prop = _settings.ValidPropertyName(x.Selector).FirstCharOfPropertiesToUpper();
 
                         if (!string.IsNullOrWhiteSpace(x.GroupInterval))
                             prop = x.GroupInterval.ToUpperInvariant() + prop;
