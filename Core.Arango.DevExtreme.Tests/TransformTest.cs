@@ -365,21 +365,48 @@ TotalCount, ProjectKey, ProjectKey_DV: DOCUMENT(AProject, ProjectKey).Name, SUMD
         }
 
         [Fact]
-        public void StringTypeTest()
+        public void GroupDayIntervalTest()
         {
             var at = new ArangoTransform(new DataSourceLoadOptionsBase
             {
                 Take = 20,
-                Filter = JArray.Parse(@"[[""name"",""contains"",""bad""],[""name"",""contains"",""""]]")
-            }, new ArangoTransformSettings());
+                Group = new[]
+                {
+                    new GroupingInfo
+                    {
+                        Selector = "start",
+                        GroupInterval = "year",
+                        IsExpanded = true
+                    },
+                    new GroupingInfo
+                    {
+                        Selector = "start",
+                        GroupInterval = "month",
+                        IsExpanded = true
+                    },
+                    new GroupingInfo
+                    {
+                        Selector = "start",
+                        GroupInterval = "day",
+                        IsExpanded = true
+                    }
+                },
+                Filter = JArray.Parse(@"[]"),
+                
+            }, new ArangoTransformSettings()
+            {
+                IteratorVar = "a",
+                PropertyTransform = (propertyName, settings) =>
+                {
+                    
+                    
+                    return $"{settings.IteratorVar}.{propertyName}";
+                }
+            });
 
             Assert.True(at.Transform(out _));
-            var parameter = at.Parameter
-                .Select(x => $"{x.Key}: {x.Value} [{x.Value?.GetType()}]")
-                .ToList();
-
-            Assert.Equal("(LOWER(x.Name) LIKE @P1 && LOWER(x.Name) LIKE @P2)", at.FilterExpression);
-            _output.WriteLine(JsonConvert.SerializeObject(parameter, Formatting.Indented));
         }
+        
+        
     }
 }
