@@ -192,23 +192,19 @@ public async Task<ActionResult<DxLoadResult>> DxQuery([FromQuery] DataSourceLoad
 
 # Serilog
 ```csharp
-webBuilder.UseSerilog((c, log) =>
-{
-    var arango = c.Configuration.GetConnectionString("Arango");
+builder.Host.UseSerilog(
+    (c, log) =>
+    {
+        var arango = builder.Configuration.GetConnectionString("Arango");
 
-    log.MinimumLevel.Debug()
-        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
-        .Enrich.FromLogContext()
-        .WriteTo.Sink(new ArangoSerilogSink(new ArangoContext(arango), 
-            database: "logs", 
-            collection: "logs", 
-            batchPostingLimit: 50, 
-            TimeSpan.FromSeconds(2)), 
-            restrictedToMinimumLevel: LogEventLevel.Information);
-
-    // This is unreliable...
-    if (Environment.UserInteractive)
+        log.Enrich.FromLogContext();
         log.WriteTo.Console(theme: AnsiConsoleTheme.Code);
-});
+        log.WriteTo.Sink(new PeriodicBatchingSink(new ArangoSerilogSink(new ArangoContext(arango)), new PeriodicBatchingSinkOptions
+        {
+            BatchSizeLimit = 1000,
+            QueueLimit = 100000,
+            Period = TimeSpan.FromSeconds(2),
+            EagerlyEmitFirstEvent = true
+        }));
+    });
 ```
