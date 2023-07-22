@@ -18,8 +18,8 @@ jobs:
         dotnet:
           - 7.x
         arango: 
+          - "arangodb:3.11"
           - "arangodb:3.10"
-          - "arangodb:3.9"
     steps:
     - uses: actions/checkout@v3
     
