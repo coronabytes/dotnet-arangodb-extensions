@@ -22,8 +22,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-	<PackageReference Include="Core.Arango" Version="3.10.0" />
-	<PackageReference Include="DevExtreme.AspNet.Data" Version="2.9.1" />
+	<PackageReference Include="Core.Arango" Version="3.11.1" />
+	<PackageReference Include="DevExtreme.AspNet.Data" Version="2.9.3" />
   </ItemGroup>
 
   <ItemGroup>

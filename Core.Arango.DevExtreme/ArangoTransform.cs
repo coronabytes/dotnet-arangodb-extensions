@@ -763,6 +763,7 @@ namespace Core.Arango.DevExtreme
                                 break;
                         }
                     }
+
                     else
                     {
                         boundParam = CreateParameter(jv.Value);
@@ -770,6 +771,11 @@ namespace Core.Arango.DevExtreme
 
                     break;
                 }
+                case JArray ja:
+                    {
+                        returnValue = $@"{property} IN {CreateParameter(ja)}";
+                        break;
+                    }
                 default:
                 {
                     var type = rawValue.GetType();

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection.Metadata;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Data.Helpers;
 using Newtonsoft.Json;
@@ -398,15 +399,31 @@ TotalCount, ProjectKey, ProjectKey_DV: DOCUMENT(AProject, ProjectKey).Name, SUMD
                 IteratorVar = "a",
                 PropertyTransform = (propertyName, settings) =>
                 {
-                    
-                    
                     return $"{settings.IteratorVar}.{propertyName}";
                 }
             });
 
             Assert.True(at.Transform(out _));
         }
-        
-        
+
+        [Fact]
+        public void NewInTest()
+        {
+            var loadOptions = DxLoad(key =>
+            {
+                if (key == "filter")
+                    return WebUtility.UrlDecode(
+                        @"[%22key%22,[%22ff9e66a6-2544-4ccd-96b5-b2afb54d7b29%22]]");
+                return null;
+            });
+
+            var at = new ArangoTransform(loadOptions, new ArangoTransformSettings());
+
+            Assert.True(at.Transform(out _));
+
+
+            _output.WriteLine(at.FilterExpression);
+            _output.WriteLine(JsonConvert.SerializeObject(at.Parameter.First()));
+        }
     }
 }
