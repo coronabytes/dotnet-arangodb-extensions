@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -628,7 +629,7 @@ namespace Core.Arango.DevExtreme
                 case "endswith":
                     opString = "ENDSWITH";
                     break;
-                case "in":
+                case "in": // TODO: deprecated
                     opString = "IN";
                     break;
                 default:
@@ -654,6 +655,12 @@ namespace Core.Arango.DevExtreme
 
             var realPropertyName = _settings.ValidPropertyName(dxFilter[0].ToString()).FirstCharOfPropertiesToUpper();
 
+            if (_settings.ArrayProperties.Contains(realPropertyName))
+            {
+                if (opString == "==")
+                    opString = "ANY ==";
+            }
+
             string property;
 
             if (_settings.ExtractFilters.TryGetValue(realPropertyName, out var extract1))
@@ -661,6 +668,7 @@ namespace Core.Arango.DevExtreme
             else
                 property = PropertyName(realPropertyName);
 
+            
 
             string boundParam = null;
 

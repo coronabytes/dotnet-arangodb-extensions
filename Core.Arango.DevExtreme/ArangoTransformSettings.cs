@@ -104,6 +104,8 @@ namespace Core.Arango.DevExtreme
         /// </summary>
         public Func<string, ArangoTransformSettings, string> PropertyTransform { get; set; }
 
+        public HashSet<string> ArrayProperties { get; set; } = new();
+
         /// <summary>
         ///     When true (default) always sort by _key last if not already present
         /// </summary>
