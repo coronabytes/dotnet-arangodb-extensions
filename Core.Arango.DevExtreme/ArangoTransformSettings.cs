@@ -35,6 +35,11 @@ namespace Core.Arango.DevExtreme
         public string IteratorVar { get; set; } = "x";
 
         /// <summary>
+        ///     SORT {SortIteratorVar}.{...} ASC
+        /// </summary>
+        public string SortIteratorVar { get; set; } = null;
+
+        /// <summary>
         ///     Name of primary key in client side model - default: key
         /// </summary>
         public string Key { get; set; } = "key";

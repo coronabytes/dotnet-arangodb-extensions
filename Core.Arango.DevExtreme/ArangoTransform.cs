@@ -481,26 +481,26 @@ namespace Core.Arango.DevExtreme
             if (_loadOption.Sort != null)
                 sortingInfos.AddRange(_loadOption.Sort.Where(x => x.Selector != null).ToList());
             else
-                return _settings.StableSort ? $"SORT {_settings.IteratorVar}._key" : string.Empty;
+                return _settings.StableSort ? $"SORT {_settings.SortIteratorVar ?? _settings.IteratorVar}._key" : string.Empty;
 
 
             var sort = "SORT " + string.Join(", ",
                 sortingInfos.Select(x =>
                 {
                     var prop = PropertyName(_settings.ValidPropertyName(x.Selector)
-                        .FirstCharOfPropertiesToUpper());
+                        .FirstCharOfPropertiesToUpper(), _settings.SortIteratorVar);
                     return $"{prop} {(x.Desc ? "DESC" : "ASC")}";
                 }));
 
             if (_settings.StableSort && !sort.Contains("_key"))
-                sort += $", {_settings.IteratorVar}._key";
+                sort += $", {_settings.SortIteratorVar ?? _settings.IteratorVar}._key";
 
             return sort;
         }
 
-        bool IsCriteria(IList item) {
+        /*bool IsCriteria(IList item) {
             return (item[0] is IList);
-        }
+        }*/
 
    
         private string GetMatchingFilter(IList dxFilter, bool not = false)
