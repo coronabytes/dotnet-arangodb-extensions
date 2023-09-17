@@ -410,7 +410,7 @@ namespace Core.Arango.DevExtreme
                         Summaries.Add($"{op}{leftSelector}");
 
                         if (op == "SUM" || op == "AVG" || op == "MIN" || op == "MAX" || op == "COUNT")
-                            return $"{op}{leftSelector} = {op}({_settings.IteratorVar}.{rightSelector})";
+                            return $"{op}{leftSelector} = {op}({rightSelector})";
                         return $"{op}{leftSelector} = SUM(0)";
                     }));
                 else if (_loadOption.TotalSummary?.Any() == true)
@@ -429,7 +429,7 @@ namespace Core.Arango.DevExtreme
                         Summaries.Add($"{op}{leftSelector}");
 
                         if (op == "SUM" || op == "AVG" || op == "MIN" || op == "MAX" || op == "COUNT")
-                            return $"{op}{leftSelector} = {op}({_settings.IteratorVar}.{rightSelector})";
+                            return $"{op}{leftSelector} = {op}({rightSelector})";
                         return $"{op}{leftSelector} = SUM(0)";
                     }));
 
