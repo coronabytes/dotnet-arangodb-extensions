@@ -400,6 +400,11 @@ namespace Core.Arango.DevExtreme
 
                         var rightSelector = selector;
                         var leftSelector = selector.Replace(".", "");
+
+                        rightSelector = _settings?.PropertyTransform != null
+                            ? _settings.PropertyTransform(selector, _settings)
+                            : rightSelector;
+
                         var op = s.SummaryType.ToUpperInvariant();
 
                         Summaries.Add($"{op}{leftSelector}");
@@ -413,6 +418,11 @@ namespace Core.Arango.DevExtreme
                     {
                         var selector = _settings.ValidPropertyName(s.Selector).FirstCharOfPropertiesToUpper();
                         var rightSelector = selector;
+
+                        rightSelector = _settings?.PropertyTransform != null
+                            ? _settings.PropertyTransform(selector, _settings)
+                            : rightSelector;
+
                         var leftSelector = selector.Replace(".", "");
                         var op = s.SummaryType.ToUpperInvariant();
 
