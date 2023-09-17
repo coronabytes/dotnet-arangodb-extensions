@@ -398,12 +398,11 @@ namespace Core.Arango.DevExtreme
                     {
                         var selector = _settings.ValidPropertyName(s.Selector).FirstCharOfPropertiesToUpper();
 
-                        var rightSelector = selector;
                         var leftSelector = selector.Replace(".", "");
 
-                        rightSelector = _settings?.PropertyTransform != null
+                        var rightSelector = _settings?.PropertyTransform != null
                             ? _settings.PropertyTransform(selector, _settings)
-                            : rightSelector;
+                            : $"{_settings.IteratorVar}.{selector}";
 
                         var op = s.SummaryType.ToUpperInvariant();
 
@@ -417,11 +416,10 @@ namespace Core.Arango.DevExtreme
                     aggregates.AddRange(_loadOption.TotalSummary.Select(s =>
                     {
                         var selector = _settings.ValidPropertyName(s.Selector).FirstCharOfPropertiesToUpper();
-                        var rightSelector = selector;
 
-                        rightSelector = _settings?.PropertyTransform != null
+                        var rightSelector = _settings?.PropertyTransform != null
                             ? _settings.PropertyTransform(selector, _settings)
-                            : rightSelector;
+                            : $"{_settings.IteratorVar}.{selector}";
 
                         var leftSelector = selector.Replace(".", "");
                         var op = s.SummaryType.ToUpperInvariant();
