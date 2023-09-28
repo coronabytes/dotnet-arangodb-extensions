@@ -106,21 +106,53 @@ namespace Core.Arango.DevExtreme
 
             var query = queryBuilder.ToString();
 
-
+            
             if (HasGrouping)
             {
                 var res = await arango.Query.ExecuteAsync<JObject>(handle, query, Parameter,
                     cancellationToken: cancellationToken);
 
                 var groupData = BuildGrouping(this, res);
-
-                return new DxLoadResult
+                
+                var dxRes = new DxLoadResult
                 {
                     Data = groupData,
-                    // Experimental
                     TotalCount = _loadOption.RequireTotalCount ? groupData.Sum(x=> x.Count ?? 0) : -1,
                     GroupCount = _loadOption.RequireGroupCount ? groupData.Count : -1,
                 };
+
+                if (_loadOption.TotalSummary?.Any() == true)
+                {
+                    dxRes.Summary = Summaries.Select((x, idx) =>
+                    {
+                        try
+                        {
+                                
+                            if (x.StartsWith("SUM") || x.StartsWith("COUNT"))
+                                return groupData.Sum(y => y.Summary[idx] ?? 0m);
+                            if (x.StartsWith("MAX"))
+                                return groupData.Max(y => y.Summary[idx] ?? 0m);
+                            if (x.StartsWith("MIN"))
+                                return groupData.Min(y => y.Summary[idx] ?? 0m);
+                            if (x.StartsWith("AVG"))
+                            {
+                                return groupData.Average(y => (y.Summary[idx] ?? 0m));
+                            }
+                                
+
+                            return 0m;
+                        }
+                        catch (Exception)
+                        {
+                            return (decimal?) 0m;
+                        }
+                    }).ToArray();
+                    
+                    
+                }
+
+
+                return dxRes;
             }
             else
             {
