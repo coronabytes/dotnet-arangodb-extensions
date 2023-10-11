@@ -8,7 +8,7 @@ namespace Core.Arango.DevExtreme
     {
         [JsonProperty("key")] 
         [JsonPropertyName("key")]
-        public string Key { get; set; }
+        public object Key { get; set; }
 
         [JsonProperty("display", NullValueHandling = NullValueHandling.Ignore)]
         [JsonPropertyName("display")]

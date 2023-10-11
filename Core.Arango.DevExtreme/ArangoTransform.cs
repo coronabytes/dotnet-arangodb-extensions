@@ -868,7 +868,7 @@ namespace Core.Arango.DevExtreme
 
             var key = aq.Groups[level];
 
-            var items = list.GroupBy(x => x.Value<string>(key)).ToList();
+            var items = list.GroupBy(x => x.Value<object>(key)).ToList();
 
             foreach (var item in items)
             {
