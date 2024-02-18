@@ -1,4 +1,4 @@
-![Build](https://github.com/coronabytes/dotnet-arangodb-extensions/workflows/Build/badge.svg)
+[![Build](https://github.com/coronabytes/dotnet-arangodb-extensions/actions/workflows/build.yml/badge.svg)](https://github.com/coronabytes/dotnet-arangodb-extensions/actions/workflows/build.yml)
 
 # Extensions for .NET ArangoDB Driver
 See [dotnet-arangodb](https://github.com/coronabytes/dotnet-arangodb)
