@@ -5,7 +5,7 @@
     <Copyright>Andreas Dominik Jung</Copyright>
     <Authors>Andreas Dominik Jung</Authors>
     <Company>Corona Bytes</Company>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Description>Transforms DevExtreme's DataSourceLoadOptions to AQL syntax</Description>
     <PackageTags>arangodb devextreme</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-	<PackageReference Include="Core.Arango" Version="3.11.4" />
+	<PackageReference Include="Core.Arango" Version="3.11.5" />
 	<PackageReference Include="DevExtreme.AspNet.Data" Version="3.0.0" />
   </ItemGroup>
 
