@@ -36,7 +36,7 @@ namespace Core.Arango.DevExtreme
                 loadOption.Take = settings.MaxTake;
         }
 
-        
+
         public bool HasGrouping { get; }
         public SummaryInfo[] MergedGroupSummary { get; set; }
         public SummaryInfo[] MergedTotalSummary { get; set; }
@@ -72,7 +72,7 @@ namespace Core.Arango.DevExtreme
                 queryBuilder.AppendLine(_settings.Preamble);
 
             queryBuilder.AppendLine($"FOR {_settings.IteratorVar} IN {collection}");
-            
+
             if (!string.IsNullOrWhiteSpace(_settings.PreFilter))
                 queryBuilder.AppendLine(_settings.PreFilter);
 
@@ -81,7 +81,7 @@ namespace Core.Arango.DevExtreme
             if (_settings.Filter != null)
                 queryBuilder.AppendLine(" && " + _settings.Filter);
 
-            
+
             if (!string.IsNullOrWhiteSpace(_settings.PostFilter))
                 queryBuilder.AppendLine(_settings.PostFilter);
 
@@ -106,18 +106,18 @@ namespace Core.Arango.DevExtreme
 
             var query = queryBuilder.ToString();
 
-            
+
             if (HasGrouping)
             {
                 var res = await arango.Query.ExecuteAsync<JObject>(handle, query, Parameter,
                     cancellationToken: cancellationToken);
 
                 var groupData = BuildGrouping(this, res);
-                
+
                 var dxRes = new DxLoadResult
                 {
                     Data = groupData,
-                    TotalCount = _loadOption.RequireTotalCount ? groupData.Sum(x=> x.Count ?? 0) : -1,
+                    TotalCount = _loadOption.RequireTotalCount ? groupData.Sum(x => x.Count ?? 0) : -1,
                     GroupCount = _loadOption.RequireGroupCount ? groupData.Count : -1,
                 };
 
@@ -127,7 +127,6 @@ namespace Core.Arango.DevExtreme
                     {
                         try
                         {
-                                
                             if (x.StartsWith("SUM") || x.StartsWith("COUNT"))
                                 return groupData.Sum(y => y.Summary[idx] ?? 0m);
                             if (x.StartsWith("MAX"))
@@ -138,17 +137,15 @@ namespace Core.Arango.DevExtreme
                             {
                                 return groupData.Average(y => (y.Summary[idx] ?? 0m));
                             }
-                                
+
 
                             return 0m;
                         }
                         catch (Exception)
                         {
-                            return (decimal?) 0m;
+                            return (decimal?)0m;
                         }
                     }).ToArray();
-                    
-                    
                 }
 
 
@@ -169,10 +166,10 @@ namespace Core.Arango.DevExtreme
                         summaryQueryBuilder.AppendLine(_settings.Preamble);
 
                     summaryQueryBuilder.AppendLine($"FOR {_settings.IteratorVar} IN {collection}");
-                    
+
                     if (!string.IsNullOrWhiteSpace(_settings.PreFilter))
                         summaryQueryBuilder.AppendLine(_settings.PreFilter);
-                    
+
                     summaryQueryBuilder.AppendLine("FILTER " + FilterExpression);
 
                     if (_settings.Filter != null)
@@ -221,8 +218,6 @@ namespace Core.Arango.DevExtreme
                         })
                         .Select(x => x.First())
                         .ToArray();
-
-
                 }
 
                 if (_loadOption.TotalSummary?.Any() == true)
@@ -235,9 +230,8 @@ namespace Core.Arango.DevExtreme
                         })
                         .Select(x => x.First())
                         .ToArray();
-
                 }
-         
+
                 #endregion
 
                 // TODO: Recursive
@@ -290,7 +284,7 @@ namespace Core.Arango.DevExtreme
 
                     if (_settings.RestrictGroups != null)
                         if (_loadOption.Group.Any(x => !_settings.RestrictGroups
-                            .Contains(x.Selector.FirstCharOfPropertiesToUpper())))
+                                .Contains(x.Selector.FirstCharOfPropertiesToUpper())))
                         {
                             error = "restricted group selector";
                             return false;
@@ -300,7 +294,6 @@ namespace Core.Arango.DevExtreme
                 error = null;
 
                 FilterExpression = Filter();
-
 
 
                 foreach (var a in _extractedFilters.GroupBy(x => x.Item1))
@@ -334,7 +327,7 @@ namespace Core.Arango.DevExtreme
         private static IList GetRootFilter(IList loadOptionsFilter)
         {
             if (loadOptionsFilter != null && loadOptionsFilter.Count == 1)
-                return GetRootFilter((JArray) loadOptionsFilter[0]);
+                return GetRootFilter((JArray)loadOptionsFilter[0]);
 
             return loadOptionsFilter;
         }
@@ -353,13 +346,12 @@ namespace Core.Arango.DevExtreme
 
             if (iteratorVar == string.Empty)
                 return name;
-            
+
             var nameLambda = _settings.PropertyTransform;
 
             if (nameLambda != null)
                 return _settings.PropertyTransform(name, _settings);
 
-       
 
             return $"{iteratorVar ?? _settings.IteratorVar}.{name}";
         }
@@ -378,9 +370,13 @@ namespace Core.Arango.DevExtreme
                     var groups = _loadOption.Group.Where(x => x.GroupInterval != "hour" && x.GroupInterval != "minute")
                         .Select(g =>
                         {
-                            var selector = PropertyName(_settings.ValidPropertyName(g.Selector).FirstCharOfPropertiesToUpper(), string.Empty);
+                            var selector =
+                                PropertyName(_settings.ValidPropertyName(g.Selector).FirstCharOfPropertiesToUpper(),
+                                    string.Empty);
 
-                            var selectorRight = _settings?.PropertyTransform != null ? _settings.PropertyTransform(selector, _settings) : $"{_settings.IteratorVar}.{selector}";
+                            var selectorRight = _settings?.PropertyTransform != null
+                                ? _settings.PropertyTransform(selector, _settings)
+                                : $"{_settings.IteratorVar}.{selector}";
                             var selectorLeft = selector.Replace(".", "");
 
                             if (g.GroupInterval == "year")
@@ -467,7 +463,7 @@ namespace Core.Arango.DevExtreme
                 sb.AppendLine("AGGREGATE");
                 sb.AppendLine(string.Join(", ", aggregates.Distinct()));
 
-                var projection = new List<string> {"TotalCount"};
+                var projection = new List<string> { "TotalCount" };
 
                 foreach (var group in Groups)
                     projection.Add(group);
@@ -521,7 +517,9 @@ namespace Core.Arango.DevExtreme
             if (_loadOption.Sort != null)
                 sortingInfos.AddRange(_loadOption.Sort.Where(x => x.Selector != null).ToList());
             else
-                return _settings.StableSort ? $"SORT {_settings.SortIteratorVar ?? _settings.IteratorVar}._key" : string.Empty;
+                return _settings.StableSort
+                    ? $"SORT {_settings.SortIteratorVar ?? _settings.IteratorVar}._key"
+                    : string.Empty;
 
 
             var sort = "SORT " + string.Join(", ",
@@ -542,7 +540,7 @@ namespace Core.Arango.DevExtreme
             return (item[0] is IList);
         }*/
 
-   
+
         private string GetMatchingFilter(IList dxFilter, bool not = false)
         {
             if (dxFilter == null)
@@ -551,45 +549,45 @@ namespace Core.Arango.DevExtreme
             if (dxFilter.Count == 0)
                 return "true";
 
-            if (dxFilter.Count >= 2)
+            if (dxFilter.Count == 1)
+                return GetMatchingFilter((JArray)dxFilter[0], not);
+
+            if (dxFilter.Count == 2)
             {
-                if (dxFilter.Count == 2)
+                if ((dxFilter[0] is JValue v && v.Value is string s && s == "!"
+                     || dxFilter[0] is string s2 && s2 == "!") && dxFilter[1] is JArray)
                 {
-                    if ((dxFilter[0] is JValue v && v.Value is string s && s == "!"
-                         || dxFilter[0] is string s2 && s2 == "!") && dxFilter[1] is JArray)
-                    {
-                        var r = GetMatchingFilter((JArray) dxFilter[1], true);
-                        return $"!({r})";
-                    }
-
-                    dxFilter.Add(dxFilter[1]);
-
-                    if (dxFilter[0] is JArray)
-                        dxFilter[1] = JToken.FromObject("and");
-                    else
-                        dxFilter[1] = JToken.FromObject("=");
+                    var r = GetMatchingFilter((JArray)dxFilter[1], true);
+                    return $"!({r})";
                 }
+
+                dxFilter.Add(dxFilter[1]);
+
+                if (dxFilter[0] is JArray)
+                    dxFilter[1] = JToken.FromObject("and");
                 else
+                    dxFilter[1] = JToken.FromObject("=");
+            }
+            else
+            {
+                // [["X","=","A"],["X","=","B"],["X","=","C"]]
+                var newDxFilterList = new List<object>();
+                int i = 0;
+                foreach (var element in dxFilter)
                 {
-                    // [["X","=","A"],["X","=","B"],["X","=","C"]]
-                    var newDxFilterList = new List<object>();
-                    int i = 0;
-                    foreach (var element in dxFilter)
+                    newDxFilterList.Add(element);
+
+                    if (element is JArray && i != dxFilter.Count - 1)
                     {
-                        newDxFilterList.Add(element);
-
-                        if (element is JArray && i != dxFilter.Count - 1)
-                        {
-                            if ((dxFilter[i+1] is JArray))
-                                newDxFilterList.Add(JToken.FromObject("and"));
-                        }
-                            
-
-                        ++i;
+                        if ((dxFilter[i + 1] is JArray))
+                            newDxFilterList.Add(JToken.FromObject("and"));
                     }
 
-                    dxFilter = newDxFilterList;
+
+                    ++i;
                 }
+
+                dxFilter = newDxFilterList;
             }
 
             //if (IsCriteria(dxFilter))
@@ -614,7 +612,6 @@ namespace Core.Arango.DevExtreme
             //    var r3 = string.Join(" ",newList);
             //    return r3;
             //}
-
 
 
             var op = dxFilter[1];
@@ -683,7 +680,7 @@ namespace Core.Arango.DevExtreme
                 for (var i = 0; i < dxFilter.Count; i++)
                     if (i % 2 == 0)
                     {
-                        logicalResult += GetMatchingFilter((JArray) dxFilter[i], not);
+                        logicalResult += GetMatchingFilter((JArray)dxFilter[i], not);
                         if (i + 1 != dxFilter.Count) logicalResult += $" {opString} ";
                     }
 
@@ -708,7 +705,6 @@ namespace Core.Arango.DevExtreme
             else
                 property = PropertyName(realPropertyName);
 
-            
 
             string boundParam = null;
 
@@ -820,10 +816,10 @@ namespace Core.Arango.DevExtreme
                     break;
                 }
                 case JArray ja:
-                    {
-                        returnValue = $@"{property} IN {CreateParameter(ja)}";
-                        break;
-                    }
+                {
+                    returnValue = $@"{property} IN {CreateParameter(ja)}";
+                    break;
+                }
                 default:
                 {
                     var type = rawValue.GetType();
@@ -898,7 +894,7 @@ namespace Core.Arango.DevExtreme
                         }
                         catch (Exception)
                         {
-                            return (decimal?) 0m;
+                            return (decimal?)0m;
                         }
                     }).ToArray();
                 }
@@ -923,7 +919,7 @@ namespace Core.Arango.DevExtreme
                         }
                         catch (Exception)
                         {
-                            return (decimal?) 0m;
+                            return (decimal?)0m;
                         }
                     }).ToArray();
                 }

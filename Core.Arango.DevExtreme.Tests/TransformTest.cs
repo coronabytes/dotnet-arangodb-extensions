@@ -425,5 +425,24 @@ TotalCount, ProjectKey, ProjectKey_DV: DOCUMENT(AProject, ProjectKey).Name, SUMD
             _output.WriteLine(at.FilterExpression);
             _output.WriteLine(JsonConvert.SerializeObject(at.Parameter.First()));
         }
+
+        [Fact]
+        public void OrAndTest()
+        {
+            var loadOptions = DxLoad(key =>
+            {
+                if (key == "filter")
+                    return WebUtility.UrlDecode(
+                        @"%5B%5B%22searchstring%22%2C%22contains%22%2C%22asdads%22%5D%2C%22and%22%2C%5B%5B%5B%22key%22%2C%22%3D%22%2C%222f8a66f4-367a-4785-ae16-aa040157fc88%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22d3ed9c41-1732-4c6d-8f2d-a9f300dc4f42%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22b22fd5ac-7ec3-4003-a7f3-6ad1f35ad878%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22401871fa-22fd-48c0-b9f9-e06c9d0e3d7e%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22091cfd10-5eaf-4942-b7e0-84662e365749%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%226ce4c205-0f54-4ba6-8000-388ceac27e7a%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%2217f10194-680f-4b2e-ab8b-8912bbd68734%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22b70bda6f-aeae-411b-b4d2-f183143177d4%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22a5bd14bf-e618-45a0-9ec8-bea721e2f587%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22e2187c8c-e677-4aa9-9e00-d7117989af47%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%2215b01cbb-112c-49b9-bf14-c7b57d6a2a8b%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22fb98e956-bec2-4287-92cb-f72a162fccbe%22%5D%2C%22or%22%2C%5B%22key%22%2C%22%3D%22%2C%22985bd70f-cdec-4817-8f36-964af3c07f8e%22%5D%5D%5D%5D");
+                return null;
+            });
+
+            var at = new ArangoTransform(loadOptions, new ArangoTransformSettings());
+            
+            Assert.True(at.Transform(out _));
+            
+            _output.WriteLine(at.FilterExpression);
+            _output.WriteLine(JsonConvert.SerializeObject(at.Parameter.First()));
+        }
     }
 }
