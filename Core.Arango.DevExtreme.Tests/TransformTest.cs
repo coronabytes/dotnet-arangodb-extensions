@@ -147,10 +147,9 @@ namespace Core.Arango.DevExtreme.Tests
 ProjectKey = x.ProjectKey
 AGGREGATE
 TotalCount = LENGTH(1), SUMDuration = SUM(x.Duration), SUMRevenue = SUM(x.Revenue)
-SORT ProjectKey ASC
-RETURN {
-TotalCount, ProjectKey, ProjectKey_DV: DOCUMENT(AProject, ProjectKey).Name, SUMDuration, SUMRevenue
-}
+LET result = {TotalCount, ProjectKey, ProjectKey_DV: DOCUMENT(AProject, ProjectKey).Name, SUMDuration, SUMRevenue}
+SORT result.ProjectKey_DV  ASC, ProjectKey  ASC
+RETURN result
 ", at.AggregateExpression);
         }
 
