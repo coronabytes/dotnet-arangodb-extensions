@@ -358,139 +358,176 @@ namespace Core.Arango.DevExtreme
 
         private string Aggregate()
         {
-            if (_loadOption.RequireTotalCount || _loadOption.TotalSummary?.Any() == true ||
-                _loadOption.Group?.Any() == true)
+            if (!_loadOption.RequireTotalCount && _loadOption.TotalSummary?.Any() != true &&
+                _loadOption.Group?.Any() != true) return string.Empty;
+            
+            var sb = new StringBuilder();
+
+            sb.AppendLine("COLLECT");
+
+            if (_loadOption.Group?.Any() == true)
             {
-                var sb = new StringBuilder();
+                var groups = _loadOption.Group.Where(x => x.GroupInterval != "hour" && x.GroupInterval != "minute")
+                    .Select(g =>
+                    {
+                        var selector =
+                            PropertyName(_settings.ValidPropertyName(g.Selector).FirstCharOfPropertiesToUpper(),
+                                string.Empty);
 
-                sb.AppendLine("COLLECT");
+                        var selectorRight = _settings?.PropertyTransform != null
+                            ? _settings.PropertyTransform(selector, _settings)
+                            : $"{_settings.IteratorVar}.{selector}";
+                        var selectorLeft = selector.Replace(".", "");
 
-                if (_loadOption.Group?.Any() == true)
-                {
-                    var groups = _loadOption.Group.Where(x => x.GroupInterval != "hour" && x.GroupInterval != "minute")
-                        .Select(g =>
+                        if (g.GroupInterval == "year")
                         {
-                            var selector =
-                                PropertyName(_settings.ValidPropertyName(g.Selector).FirstCharOfPropertiesToUpper(),
-                                    string.Empty);
+                            Groups.Add($"YEAR{selectorLeft}");
+                            return $"YEAR{selectorLeft} = DATE_YEAR({selectorRight})";
+                        }
 
-                            var selectorRight = _settings?.PropertyTransform != null
-                                ? _settings.PropertyTransform(selector, _settings)
-                                : $"{_settings.IteratorVar}.{selector}";
-                            var selectorLeft = selector.Replace(".", "");
+                        if (g.GroupInterval == "month")
+                        {
+                            Groups.Add($"MONTH{selectorLeft}");
+                            return $"MONTH{selectorLeft} = DATE_MONTH({selectorRight})";
+                        }
 
-                            if (g.GroupInterval == "year")
-                            {
-                                Groups.Add($"YEAR{selectorLeft}");
-                                return $"YEAR{selectorLeft} = DATE_YEAR({selectorRight})";
-                            }
+                        if (g.GroupInterval == "day")
+                        {
+                            Groups.Add($"DAY{selectorLeft}");
+                            return $"DAY{selectorLeft} = DATE_DAY({selectorRight})";
+                        }
 
-                            if (g.GroupInterval == "month")
-                            {
-                                Groups.Add($"MONTH{selectorLeft}");
-                                return $"MONTH{selectorLeft} = DATE_MONTH({selectorRight})";
-                            }
+                        if (g.GroupInterval == "hour")
+                        {
+                            Groups.Add($"HOUR{selectorLeft}");
+                            return $"DAY{selectorLeft} = DATE_HOUR({selectorRight})";
+                        }
 
-                            if (g.GroupInterval == "day")
-                            {
-                                Groups.Add($"DAY{selectorLeft}");
-                                return $"DAY{selectorLeft} = DATE_DAY({selectorRight})";
-                            }
+                        if (g.GroupInterval == "minute")
+                        {
+                            Groups.Add($"MINUTE{selectorLeft}");
+                            return $"MINUTE{selectorLeft} = DATE_MINUTE({selectorRight})";
+                        }
 
-                            if (g.GroupInterval == "hour")
-                            {
-                                Groups.Add($"HOUR{selectorLeft}");
-                                return $"DAY{selectorLeft} = DATE_HOUR({selectorRight})";
-                            }
+                        Groups.Add(selectorLeft);
+                        return $"{selectorLeft} = {selectorRight}";
+                    }).ToList();
 
-                            if (g.GroupInterval == "minute")
-                            {
-                                Groups.Add($"MINUTE{selectorLeft}");
-                                return $"MINUTE{selectorLeft} = DATE_MINUTE({selectorRight})";
-                            }
-
-                            Groups.Add(selectorLeft);
-                            return $"{selectorLeft} = {selectorRight}";
-                        }).ToList();
-
-                    sb.AppendLine(string.Join(", ", groups));
-                }
-
-                var aggregates = new List<string>
-                {
-                    "TotalCount = LENGTH(1)"
-                };
-
-                if (_loadOption.Group?.Any() == true && _loadOption.GroupSummary?.Any() == true)
-                    aggregates.AddRange(_loadOption.GroupSummary.Select(s =>
-                    {
-                        var selector = _settings.ValidPropertyName(s.Selector).FirstCharOfPropertiesToUpper();
-
-                        var leftSelector = selector.Replace(".", "");
-
-                        var rightSelector = _settings?.PropertyTransform != null
-                            ? _settings.PropertyTransform(selector, _settings)
-                            : $"{_settings.IteratorVar}.{selector}";
-
-                        var op = s.SummaryType.ToUpperInvariant();
-
-                        Summaries.Add($"{op}{leftSelector}");
-
-                        if (op == "SUM" || op == "AVG" || op == "MIN" || op == "MAX" || op == "COUNT")
-                            return $"{op}{leftSelector} = {op}({rightSelector})";
-                        return $"{op}{leftSelector} = SUM(0)";
-                    }));
-                else if (_loadOption.TotalSummary?.Any() == true)
-                    aggregates.AddRange(_loadOption.TotalSummary.Select(s =>
-                    {
-                        var selector = _settings.ValidPropertyName(s.Selector).FirstCharOfPropertiesToUpper();
-
-                        var rightSelector = _settings?.PropertyTransform != null
-                            ? _settings.PropertyTransform(selector, _settings)
-                            : $"{_settings.IteratorVar}.{selector}";
-
-                        var leftSelector = selector.Replace(".", "");
-                        var op = s.SummaryType.ToUpperInvariant();
-
-                        Summaries.Add($"{op}{leftSelector}");
-
-                        if (op == "SUM" || op == "AVG" || op == "MIN" || op == "MAX" || op == "COUNT")
-                            return $"{op}{leftSelector} = {op}({rightSelector})";
-                        return $"{op}{leftSelector} = SUM(0)";
-                    }));
-
-
-                sb.AppendLine("AGGREGATE");
-                sb.AppendLine(string.Join(", ", aggregates.Distinct()));
-
-                var projection = new List<string> { "TotalCount" };
-
-                foreach (var group in Groups)
-                    projection.Add(group);
-
-                if (_settings.GroupLookups?.Any() == true)
-                    foreach (var glookup in _settings.GroupLookups)
-                    {
-                        var g = Groups.SingleOrDefault(x =>
-                            x.Equals(glookup.Key, StringComparison.InvariantCultureIgnoreCase));
-
-                        if (g != null) projection.Add($"{g}_DV: {glookup.Value}");
-                    }
-
-                foreach (var summary in Summaries.Distinct())
-                    projection.Add(summary);
-
-                if (_loadOption.Group?.Any() == true)
-                    sb.AppendLine(SortExpression.Replace(".", "")); // Refactor
-
-                sb.AppendLine("RETURN {");
-                sb.AppendLine(string.Join(", ", projection));
-                sb.AppendLine("}");
-
-                return sb.ToString();
+                sb.AppendLine(string.Join(", ", groups));
             }
 
-            return string.Empty;
+            var aggregates = new List<string>
+            {
+                "TotalCount = LENGTH(1)"
+            };
+
+            if (_loadOption.Group?.Any() == true && _loadOption.GroupSummary?.Any() == true)
+                aggregates.AddRange(_loadOption.GroupSummary.Select(s =>
+                {
+                    var selector = _settings.ValidPropertyName(s.Selector).FirstCharOfPropertiesToUpper();
+
+                    var leftSelector = selector.Replace(".", "");
+
+                    var rightSelector = _settings?.PropertyTransform != null
+                        ? _settings.PropertyTransform(selector, _settings)
+                        : $"{_settings.IteratorVar}.{selector}";
+
+                    var op = s.SummaryType.ToUpperInvariant();
+
+                    Summaries.Add($"{op}{leftSelector}");
+
+                    if (op == "SUM" || op == "AVG" || op == "MIN" || op == "MAX" || op == "COUNT")
+                        return $"{op}{leftSelector} = {op}({rightSelector})";
+                    return $"{op}{leftSelector} = SUM(0)";
+                }));
+            else if (_loadOption.TotalSummary?.Any() == true)
+                aggregates.AddRange(_loadOption.TotalSummary.Select(s =>
+                {
+                    var selector = _settings.ValidPropertyName(s.Selector).FirstCharOfPropertiesToUpper();
+
+                    var rightSelector = _settings?.PropertyTransform != null
+                        ? _settings.PropertyTransform(selector, _settings)
+                        : $"{_settings.IteratorVar}.{selector}";
+
+                    var leftSelector = selector.Replace(".", "");
+                    var op = s.SummaryType.ToUpperInvariant();
+
+                    Summaries.Add($"{op}{leftSelector}");
+
+                    if (op == "SUM" || op == "AVG" || op == "MIN" || op == "MAX" || op == "COUNT")
+                        return $"{op}{leftSelector} = {op}({rightSelector})";
+                    return $"{op}{leftSelector} = SUM(0)";
+                }));
+
+
+            sb.AppendLine("AGGREGATE");
+            sb.AppendLine(string.Join(", ", aggregates.Distinct()));
+
+            var projection = new List<string> { "TotalCount" };
+
+            foreach (var group in Groups)
+                projection.Add(group);
+
+            if (_settings.GroupLookups?.Any() == true)
+                foreach (var glookup in _settings.GroupLookups)
+                {
+                    var group = Groups.SingleOrDefault(x =>
+                        x.Equals(glookup.Key, StringComparison.InvariantCultureIgnoreCase));
+
+                    if (group != null) projection.Add($"{group}_DV: {glookup.Value}");
+                }
+
+            foreach (var summary in Summaries.Distinct())
+                projection.Add(summary);
+                
+            sb.AppendLine($"LET result = {{{string.Join(", ", projection)}}}");
+
+            if (_loadOption.Group?.Any() == true)
+            {
+                sb.Append("SORT ");
+                var isFirst = true;
+                foreach (var untrimmed in SortExpression.Split(','))
+                {
+                    var sortValue = untrimmed.Trim();
+                        
+                    if (isFirst)
+                    {
+                        if (!sortValue.StartsWith("SORT ")) 
+                        {
+                            throw new Exception("Expression should start with 'SORT ':" + SortExpression);
+                        }
+                        sortValue = sortValue[5..];
+                    }
+                    else
+                    {
+                        sb.Append(',');
+                    }
+                        
+                    isFirst = false;
+                    
+                    var end = string.Empty;
+                    if (sortValue.EndsWith(" ASC") | sortValue.EndsWith(" DESC"))
+                    {
+                        end = sortValue[^4..];
+                        sortValue = sortValue[..^4];
+                    }
+
+                    sortValue = sortValue.Trim().Replace(".","");
+
+                    if (_settings.GroupLookups?.ContainsKey(sortValue) == true)
+                    {
+                        sb.Append($"result.{sortValue}_DV").Append(' ').Append(end).Append(", ");
+                    }
+                        
+                    sb.Append(sortValue).Append(' ').Append(end);
+                }
+                sb.AppendLine();
+            }
+                
+            sb.AppendLine("RETURN result");
+
+            return sb.ToString();
+
         }
 
         private string Sort()
