@@ -8,28 +8,21 @@ using Xunit.Abstractions;
 
 namespace Core.Arango.Migration.Tests
 {
-    public class MigrationTest : IAsyncLifetime
+    public class MigrationTest(ITestOutputHelper output) : IAsyncLifetime
     {
-        private readonly ITestOutputHelper _output;
-
-        public MigrationTest(ITestOutputHelper output)
-        {
-            _output = output;
-        }
-
-        protected readonly IArangoContext Arango =
+		    protected readonly IArangoContext Arango =
             new ArangoContext($"Server=http://localhost:8529;Realm=CI-{Guid.NewGuid():D};User=root;Password=;");
 
         protected readonly IArangoContext Arango2 =
             new ArangoContext($"Server=http://localhost:8529;Realm=stp;User=root;Password=;");
 
-        public async ValueTask InitializeAsync()
+        public async Task InitializeAsync()
         {
             await Arango.Database.CreateAsync("test");
         }
 
         [Fact]
-        public async ValueTask Migrate2X()
+        public async Task Migrate2X()
         {
             var migrator = new ArangoMigrator(Arango);
             await migrator.ApplyStructureAsync("test", new ArangoStructure
@@ -100,7 +93,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async ValueTask Compare()
+        public async Task Compare()
         {
             const string source = "96b02ae6-bda4-43e2-b83e-28293913ddb5";
             const string target = "target";
@@ -117,13 +110,13 @@ namespace Core.Arango.Migration.Tests
                 Notify = n =>
                 {
                     if (n.State != ArangoMigrationState.Identical)
-                        _output.WriteLine($"{n.State} {n.Object} {n.Name}");
+                        output.WriteLine($"{n.State} {n.Object} {n.Name}");
                 }
             });
         }
 
         [Fact]
-        public async ValueTask ImportExport()
+        public async Task ImportExport()
         {
             const string source = "96b02ae6-bda4-43e2-b83e-28293913ddb5";
             const string target = "target";
@@ -148,7 +141,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async ValueTask ManualUp()
+        public async Task ManualUp()
         {
             var migrationService = new ArangoMigrator(Arango);
 
@@ -217,7 +210,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async ValueTask AutoMigration()
+        public async Task AutoMigration()
         {
             var migrator = new ArangoMigrator(Arango);
             migrator.AddMigrations(typeof(MigrationTest).Assembly);
@@ -225,10 +218,10 @@ namespace Core.Arango.Migration.Tests
 
             var structure = await migrator.GetStructureAsync("test");
 
-            _output.WriteLine(structure.Serialize());
+            output.WriteLine(structure.Serialize());
         }
 
-        public async ValueTask DisposeAsync()
+        public async Task DisposeAsync()
         {
             try
             {
