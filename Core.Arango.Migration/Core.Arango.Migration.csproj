@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Core.Arango" Version="3.11.8" />
+	  <PackageReference Include="Core.Arango" Version="3.11.9" />
   </ItemGroup>
 
   <ItemGroup>
