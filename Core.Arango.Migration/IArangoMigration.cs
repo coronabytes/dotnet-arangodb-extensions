@@ -20,11 +20,11 @@ namespace Core.Arango.Migration
         /// <summary>
         ///  Changes in this migration
         /// </summary>
-        public Task Up(IArangoMigrator migrator, ArangoHandle handle);
+        public ValueTask Up(IArangoMigrator migrator, ArangoHandle handle);
 
         /// <summary>
         ///  Reverse changes from this migration
         /// </summary>
-        public Task Down(IArangoMigrator migrator, ArangoHandle handle);
+        public ValueTask Down(IArangoMigrator migrator, ArangoHandle handle);
     }
 }

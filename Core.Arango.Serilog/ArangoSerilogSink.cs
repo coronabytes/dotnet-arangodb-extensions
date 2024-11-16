@@ -46,7 +46,7 @@ namespace Core.Arango.Serilog
             }
         }
 
-        public async Task EmitBatchAsync(IEnumerable<LogEvent> events)
+        public async ValueTask EmitBatchAsync(IEnumerable<LogEvent> events)
         {
             try
             {
@@ -66,7 +66,7 @@ namespace Core.Arango.Serilog
             }
         }
 
-        public Task OnEmptyBatchAsync()
+        public ValueTask OnEmptyBatchAsync()
         {
             return Task.CompletedTask;
         }

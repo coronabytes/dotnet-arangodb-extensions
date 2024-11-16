@@ -50,7 +50,7 @@ namespace Core.Arango.Migration
         }
 
         /// <inheritdoc/>
-        public async Task<ArangoStructure> GetStructureAsync(ArangoHandle db,
+        public async ValueTask<ArangoStructure> GetStructureAsync(ArangoHandle db,
             CancellationToken cancellationToken = default)
         {
             var snapshot = new ArangoStructure();
@@ -174,7 +174,7 @@ namespace Core.Arango.Migration
         }
 
         /// <inheritdoc/>
-        public async Task ApplyStructureAsync(ArangoHandle db, ArangoStructure update,
+        public async ValueTask ApplyStructureAsync(ArangoHandle db, ArangoStructure update,
             ArangoMigrationOptions options = null)
         {
             options ??= new ArangoMigrationOptions();
@@ -547,7 +547,7 @@ namespace Core.Arango.Migration
         }
 
         /// <inheritdoc/>
-        public async Task UpgradeAsync(ArangoHandle db)
+        public async ValueTask UpgradeAsync(ArangoHandle db)
         {
             var cols = await _arango.Collection.ListAsync(db);
 
@@ -579,7 +579,7 @@ namespace Core.Arango.Migration
         }
 
         /// <inheritdoc/>
-        public async Task ExportAsync(ArangoHandle db, Stream output, ArangoMigrationScope scope)
+        public async ValueTask ExportAsync(ArangoHandle db, Stream output, ArangoMigrationScope scope)
         {
             using var zip = new ZipArchive(output, ZipArchiveMode.Create, true, Encoding.UTF8);
 
@@ -614,7 +614,7 @@ namespace Core.Arango.Migration
         }
 
         /// <inheritdoc/>
-        public async Task ImportAsync(ArangoHandle db, Stream input, ArangoMigrationScope scope)
+        public async ValueTask ImportAsync(ArangoHandle db, Stream input, ArangoMigrationScope scope)
         {
             using var zip = new ZipArchive(input, ZipArchiveMode.Read);
 

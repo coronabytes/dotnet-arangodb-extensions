@@ -23,13 +23,13 @@ namespace Core.Arango.Migration.Tests
         protected readonly IArangoContext Arango2 =
             new ArangoContext($"Server=http://localhost:8529;Realm=stp;User=root;Password=;");
 
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             await Arango.Database.CreateAsync("test");
         }
 
         [Fact]
-        public async Task Migrate2X()
+        public async ValueTask Migrate2X()
         {
             var migrator = new ArangoMigrator(Arango);
             await migrator.ApplyStructureAsync("test", new ArangoStructure
@@ -100,7 +100,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async Task Compare()
+        public async ValueTask Compare()
         {
             const string source = "96b02ae6-bda4-43e2-b83e-28293913ddb5";
             const string target = "target";
@@ -123,7 +123,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async Task ImportExport()
+        public async ValueTask ImportExport()
         {
             const string source = "96b02ae6-bda4-43e2-b83e-28293913ddb5";
             const string target = "target";
@@ -148,7 +148,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async Task ManualUp()
+        public async ValueTask ManualUp()
         {
             var migrationService = new ArangoMigrator(Arango);
 
@@ -217,7 +217,7 @@ namespace Core.Arango.Migration.Tests
         }
 
         [Fact]
-        public async Task AutoMigration()
+        public async ValueTask AutoMigration()
         {
             var migrator = new ArangoMigrator(Arango);
             migrator.AddMigrations(typeof(MigrationTest).Assembly);
@@ -228,7 +228,7 @@ namespace Core.Arango.Migration.Tests
             _output.WriteLine(structure.Serialize());
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             try
             {

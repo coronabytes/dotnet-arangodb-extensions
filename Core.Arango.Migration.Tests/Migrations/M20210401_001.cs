@@ -11,7 +11,7 @@ namespace Core.Arango.Migration.Tests.Migrations
     {
         public long Id => 20210401_001;
         public string Name => "Initial";
-        public async Task Up(IArangoMigrator migrator, ArangoHandle handle)
+        public async ValueTask Up(IArangoMigrator migrator, ArangoHandle handle)
         {
             await migrator.ApplyStructureAsync(handle, new ArangoStructure
             {
@@ -37,7 +37,7 @@ namespace Core.Arango.Migration.Tests.Migrations
             });
         }
 
-        public Task Down(IArangoMigrator migrator, ArangoHandle handle)
+        public ValueTask Down(IArangoMigrator migrator, ArangoHandle handle)
         {
             throw new NotImplementedException();
         }
