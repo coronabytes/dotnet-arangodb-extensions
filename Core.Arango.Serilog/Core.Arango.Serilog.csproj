@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Core.Arango" Version="3.11.8" />
+	<PackageReference Include="Core.Arango" Version="3.12.0" />
     <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="5.0.0" />
   </ItemGroup>
 

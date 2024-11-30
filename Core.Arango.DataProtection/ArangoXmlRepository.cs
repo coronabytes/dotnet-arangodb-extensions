@@ -31,10 +31,10 @@ namespace Core.Arango.DataProtection
             try
             {
                 if (!_context.Database.ExistAsync(_database).Result)
-                    _context.Database.CreateAsync(_database).Wait();
+                    _context.Database.CreateAsync(_database).AsTask().Wait();
 
                 if (!_context.Collection.ExistAsync(_database, collection).Result)
-                    _context.Collection.CreateAsync(_database, _collection, ArangoCollectionType.Document).Wait();
+                    _context.Collection.CreateAsync(_database, _collection, ArangoCollectionType.Document).AsTask().Wait();
             }
             catch (Exception e)
             {
@@ -62,7 +62,7 @@ namespace Core.Arango.DataProtection
                 Xml = element.ToString(SaveOptions.DisableFormatting)
             };
 
-            _context.Document.CreateAsync(_database, _collection, newKey).Wait();
+            _context.Document.CreateAsync(_database, _collection, newKey).AsTask().Wait();
         }
 
         private static XElement TryParseKeyXml(string xml, ILogger logger)

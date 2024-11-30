@@ -28,7 +28,7 @@ namespace Core.Arango.Serilog
             try
             {
                 if (!_arango.Database.ExistAsync(_database).Result)
-                    _arango.Database.CreateAsync(_database).Wait();
+                    _arango.Database.CreateAsync(_database).AsTask().Wait();
 
                 if (!_arango.Collection.ExistAsync(_database, collection).Result)
                     _arango.Collection.CreateAsync(_database, new ArangoCollection
@@ -38,7 +38,7 @@ namespace Core.Arango.Serilog
                         {
                             Type = ArangoKeyType.Padded
                         }
-                    }).Wait();
+                    }).AsTask().Wait();
             }
             catch (Exception)
             {
