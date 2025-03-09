@@ -22,7 +22,7 @@ namespace Core.Arango.Serilog
         private readonly IArangoContext _arango;
         private readonly string _collection;
         private readonly string _database;
-        private readonly LoggingRenderStrategy _renderMessage = LoggingRenderStrategy.RenderMessage;
+        private readonly LoggingRenderStrategy _renderMessage;
         private readonly bool _indexLevel;
         private readonly bool _indexTimestamp;
         private readonly bool _indexTemplate;
