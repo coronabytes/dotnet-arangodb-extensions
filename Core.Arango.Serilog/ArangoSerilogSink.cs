@@ -112,15 +112,18 @@ namespace Core.Arango.Serilog
         {
             try
             {
+                var renderMessage = _renderMessage.HasFlag(LoggingRenderStrategy.RenderMessage);
+                var storeTemplate = _renderMessage.HasFlag(LoggingRenderStrategy.StoreTemplate);
+                
                 await _arango.Document.CreateManyAsync(_database, _collection, events.Select(x => new LogEventEntity
                 {
                     Level = x.Level.ToString(),
                     Timestamp = x.Timestamp.UtcDateTime,
-                    Message = _renderMessage.HasFlag(LoggingRenderStrategy.RenderMessage)
+                    Message = renderMessage
                         ? x.RenderMessage()
                         : null,
                     MessageTemplate =
-                        _renderMessage.HasFlag(LoggingRenderStrategy.StoreTemplate)
+                        storeTemplate
                             ? x.MessageTemplate.Text
                             : null,
                     Exception = x.Exception?.ToString(),
