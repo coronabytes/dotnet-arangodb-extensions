@@ -196,10 +196,17 @@ builder.Host.UseSerilog(
     (c, log) =>
     {
         var arango = builder.Configuration.GetConnectionString("Arango");
+        var sink = new ArangoSerilogSink(new ArangoContext(arango), 
+            database: "logs", 
+            logs: "logs", 
+            renderMessage: ArangoSerilogSink.LoggingRenderStrategy.RenderMessage | ArangoSerilogSink.LoggingRenderStrategy.StoreTemplate , 
+            indexLevel: true,
+            indexTimestamp: true,
+            indexTemplate: true);
 
         log.Enrich.FromLogContext();
         log.WriteTo.Console(theme: AnsiConsoleTheme.Code);
-        log.WriteTo.Sink(new PeriodicBatchingSink(new ArangoSerilogSink(new ArangoContext(arango)), new PeriodicBatchingSinkOptions
+        log.WriteTo.Sink(new PeriodicBatchingSink(sink, new PeriodicBatchingSinkOptions
         {
             BatchSizeLimit = 1000,
             QueueLimit = 100000,
