@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Migration", "Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Arango.Migration.Tests", "Core.Arango.Migration.Tests\Core.Arango.Migration.Tests.csproj", "{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Arango.Serilog.Tests", "Core.Arango.Serilog.Tests\Core.Arango.Serilog.Tests.csproj", "{FE0F07AC-61FE-4757-9474-C4BC2E54C8AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDDB495F-5E0E-495B-8DEF-BEF495B9F8AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE0F07AC-61FE-4757-9474-C4BC2E54C8AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE0F07AC-61FE-4757-9474-C4BC2E54C8AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE0F07AC-61FE-4757-9474-C4BC2E54C8AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE0F07AC-61FE-4757-9474-C4BC2E54C8AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
