@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Serilog;
+﻿using Serilog;
 using Serilog.Sinks.PeriodicBatching;
 using Testcontainers.ArangoDb;
 
@@ -12,31 +11,33 @@ public class SerilogUnitTests : IAsyncLifetime
 {
     private const string DatabaseName = "test";
     private const string CollectionName = "logs";
-    
-    ArangoDbContainer ArangoDbContainer;
-    Func<IArangoConfiguration> CreateArangoConfiguration;
+
+    private ArangoDbContainer? _arangoDbContainer;
+    private Func<IArangoConfiguration>? _createArangoConfiguration;
 
     public async Task InitializeAsync()
     {
-        ArangoDbContainer = new ArangoDbBuilder().Build();
-        await ArangoDbContainer.StartAsync();
+        _arangoDbContainer = new ArangoDbBuilder()
+            .WithPassword("password")
+            .Build();
+        await _arangoDbContainer.StartAsync();
 
-        CreateArangoConfiguration = () => new ArangoConfiguration
+        _createArangoConfiguration = () => new ArangoConfiguration
         {
             ConnectionString =
-                $"Server={ArangoDbContainer.GetTransportAddress()};User=root;Realm=CI-{Guid.NewGuid():D};Password=password;",
+                $"Server={_arangoDbContainer.GetTransportAddress()};User=root;Realm=CI-{Guid.NewGuid():D};Password=password;",
         };
     }
 
     public async Task DisposeAsync()
     {
-        await ArangoDbContainer.DisposeAsync();
+        await _arangoDbContainer!.DisposeAsync();
     }
 
     [Fact]
     public async Task DefaultDatabaseIsCreated()
     {
-        var config = CreateArangoConfiguration();
+        var config = _createArangoConfiguration!();
         var arango = new ArangoContext(config);
 
         Log.Logger = new LoggerConfiguration()
@@ -62,7 +63,7 @@ public class SerilogUnitTests : IAsyncLifetime
     [Fact]
     public async Task DatabaseAndIndexesAreCreated()
     {
-        var config = CreateArangoConfiguration();
+        var config = _createArangoConfiguration!();
         var arango = new ArangoContext(config);
         
         Log.Logger = new LoggerConfiguration()
