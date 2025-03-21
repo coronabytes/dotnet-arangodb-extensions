@@ -34,72 +34,70 @@ namespace Core.Arango.Serilog
             LoggingRenderStrategy renderMessage = LoggingRenderStrategy.RenderMessage,
             bool indexLevel = false,
             bool indexTimestamp = false,
-            bool indexTemplate = false) : this(arango, database, collection)
-        {
-            _renderMessage = renderMessage;
-            _indexLevel = indexLevel;
-            _indexTimestamp = indexTimestamp;
-            _indexTemplate = indexTemplate;
-        }
-
-
-        public ArangoSerilogSink(
-            IArangoContext arango,
-            string database = "logs",
-            string collection = "logs")
+            bool indexTemplate = false)
         {
             _arango = arango;
             _database = database;
             _collection = collection;
+            _renderMessage = renderMessage;
+            _indexLevel = indexLevel;
+            _indexTimestamp = indexTimestamp;
+            _indexTemplate = indexTemplate;
+            
+            Setup().GetAwaiter().GetResult();
+        }
 
+        private async Task Setup()
+        {
             try
             {
-                if (!_arango.Database.ExistAsync(_database).AsTask().GetAwaiter().GetResult())
-                    _arango.Database.CreateAsync(_database).AsTask().Wait();
-
-                var indexes = _arango.Index.ListAsync(_database, _collection)
-                    .AsTask().GetAwaiter().GetResult();
-
-                if (!_arango.Collection.ExistAsync(_database, collection).AsTask().GetAwaiter().GetResult())
+                if (!await _arango.Database.ExistAsync(_database))
                 {
-                    _arango.Collection.CreateAsync(_database, new ArangoCollection
+                    await _arango.Database.CreateAsync(_database);
+                }
+
+                if (!await _arango.Collection.ExistAsync(_database, _collection))
+                {
+                    await _arango.Collection.CreateAsync(_database, new ArangoCollection
                     {
                         Name = _collection,
                         KeyOptions = new ArangoKeyOptions
                         {
                             Type = ArangoKeyType.Padded
                         }
-                    }).AsTask().Wait();
+                    });
                 }
 
-                if (_indexLevel &&
-                    indexes.Any(x => x.Name == nameof(LogEventEntity.Level)))
+                var indexes = (await _arango.Index.ListAsync(_database, _collection)).ToList();
+
+                if (_indexLevel && indexes.All(x => x.Name != nameof(LogEventEntity.Level)))
                 {
-                    _arango.Index.CreateAsync(_database, _collection, new ArangoIndex
+                    await _arango.Index.CreateAsync(_database, _collection, new ArangoIndex
                     {
                         Type = ArangoIndexType.Persistent,
-                        Name = nameof(LogEventEntity.Level)
-                    }).AsTask().Wait();
+                        Name = nameof(LogEventEntity.Level),
+                        Fields = [nameof(LogEventEntity.Level)]
+                    });
                 }
 
-                if (_indexTimestamp &&
-                    indexes.Any(x => x.Name == nameof(LogEventEntity.Timestamp)))
+                if (_indexTimestamp && indexes.All(x => x.Name != nameof(LogEventEntity.Timestamp)))
                 {
-                    _arango.Index.CreateAsync(_database, _collection, new ArangoIndex
+                    await _arango.Index.CreateAsync(_database, _collection, new ArangoIndex
                     {
                         Type = ArangoIndexType.Persistent,
-                        Name = nameof(LogEventEntity.Timestamp)
-                    }).AsTask().Wait();
+                        Name = nameof(LogEventEntity.Timestamp),
+                        Fields = [nameof(LogEventEntity.Timestamp)]
+                    });
                 }
-                
-                if (_indexTemplate &&
-                    indexes.Any(x => x.Name == nameof(LogEventEntity.MessageTemplate)))
+
+                if (_indexTemplate && indexes.All(x => x.Name != nameof(LogEventEntity.MessageTemplate)))
                 {
-                    _arango.Index.CreateAsync(_database, _collection, new ArangoIndex
+                    await _arango.Index.CreateAsync(_database, _collection, new ArangoIndex
                     {
                         Type = ArangoIndexType.Persistent,
-                        Name = nameof(LogEventEntity.MessageTemplate)
-                    }).AsTask().Wait();
+                        Name = nameof(LogEventEntity.MessageTemplate),
+                        Fields = [nameof(LogEventEntity.MessageTemplate)]
+                    });
                 }
             }
             catch (Exception)
@@ -114,7 +112,7 @@ namespace Core.Arango.Serilog
             {
                 var renderMessage = _renderMessage.HasFlag(LoggingRenderStrategy.RenderMessage);
                 var storeTemplate = _renderMessage.HasFlag(LoggingRenderStrategy.StoreTemplate);
-                
+
                 await _arango.Document.CreateManyAsync(_database, _collection, events.Select(x => new LogEventEntity
                 {
                     Level = x.Level.ToString(),
