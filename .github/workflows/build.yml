@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         dotnet:
-          - 9.x
+          - 10.x
         arango: 
           - "arangodb:3.11"
     steps:

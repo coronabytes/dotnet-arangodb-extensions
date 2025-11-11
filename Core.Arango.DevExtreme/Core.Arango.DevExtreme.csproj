@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <Copyright>Andreas Dominik Jung</Copyright>
     <Authors>Andreas Dominik Jung</Authors>
     <Company>Corona Bytes</Company>
@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Core.Arango" Version="3.12.0" />
+	  <PackageReference Include="Core.Arango" Version="3.12.2" />
 	  <PackageReference Include="DevExtreme.AspNet.Data" Version="3.0.0" />
   </ItemGroup>
 
